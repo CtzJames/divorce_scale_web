@@ -1,0 +1,55 @@
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: #f7f6f3;
+  color: #1c1917;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+}
+
+.page-shell {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32px;
+}
+
+.hero-card {
+  width: 100%;
+  max-width: 920px;
+  background: #ffffff;
+  border: 1px solid #e7e5e4;
+  border-radius: 32px;
+  padding: 40px;
+  box-shadow: 0 12px 40px rgba(28, 25, 23, 0.06);
+}
+
+.hero-tag {
+  display: inline-block;
+  padding: 8px 14px;
+  border-radius: 999px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  color: #b45309;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+h1 {
+  margin: 20px 0 0;
+  font-size: 48px;
+  line-height: 1.15;
+}
+
+p {
+  margin: 24px 0 0;
+  font-size: 18px;
+  line-height: 1.9;
+  color: #57534e;
+}

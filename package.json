@@ -1,0 +1,27 @@
+{
+  "name": "divorce_scale_web",
+  "version": "1.0.0",
+  "description": "离婚力量表网页端项目。",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/CtzJames/divorce_scale_web.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/CtzJames/divorce_scale_web/issues"
+  },
+  "homepage": "https://github.com/CtzJames/divorce_scale_web#readme",
+  "dependencies": {
+    "next": "^16.2.3",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5"
+  }
+}
