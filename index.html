@@ -1,0 +1,914 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>离婚力量表网页端</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+      background: #f7f6f3;
+      color: #1c1917;
+    }
+    .app {
+      min-height: 100vh;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 24px;
+    }
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+    }
+    .brand h1 {
+      margin: 0;
+      font-size: 42px;
+      line-height: 1.15;
+      letter-spacing: -0.02em;
+    }
+    .tabs {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    .tab {
+      border: 1px solid #d6d3d1;
+      background: white;
+      color: #44403c;
+      padding: 10px 18px;
+      border-radius: 999px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .tab.active {
+      background: #1c1917;
+      color: white;
+      border-color: #1c1917;
+    }
+    .tab:disabled {
+      cursor: not-allowed;
+      color: #a8a29e;
+      background: #f5f5f4;
+      border-color: #e7e5e4;
+    }
+    .shell {
+      border: 1px solid #e7e5e4;
+      border-radius: 32px;
+      background: white;
+      overflow: hidden;
+      box-shadow: 0 12px 40px rgba(28,25,23,.06);
+    }
+    .screen { display: none; }
+    .screen.active { display: block; }
+    .home {
+      background-image: radial-gradient(circle at 1px 1px, rgba(0,0,0,.04) 1px, transparent 0);
+      background-size: 24px 24px;
+      padding: 40px;
+      display: grid;
+      grid-template-columns: 1.2fr .8fr;
+      gap: 32px;
+    }
+    .pill {
+      display: inline-flex;
+      padding: 8px 14px;
+      font-size: 12px;
+      border-radius: 999px;
+      border: 1px solid #fde68a;
+      background: #fffbeb;
+      color: #b45309;
+      font-weight: 600;
+    }
+    .hero-title {
+      margin: 20px 0 0;
+      font-size: 66px;
+      line-height: 1.08;
+      letter-spacing: -0.03em;
+    }
+    .hero-copy, .card p, .intro-copy, .note, .dim-copy {
+      color: #57534e;
+      line-height: 1.9;
+    }
+    .hero-copy {
+      max-width: 760px;
+      margin-top: 22px;
+      font-size: 18px;
+    }
+    .actions { margin-top: 28px; display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn {
+      border: 1px solid #d6d3d1;
+      background: white;
+      color: #44403c;
+      padding: 14px 20px;
+      border-radius: 16px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn.primary {
+      background: #1c1917;
+      border-color: #1c1917;
+      color: white;
+    }
+    .btn:disabled {
+      cursor: not-allowed;
+      opacity: .6;
+    }
+    .meta-list {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 26px;
+    }
+    .meta-item {
+      font-size: 14px;
+      color: #78716c;
+      background: #f5f5f4;
+      padding: 10px 14px;
+      border-radius: 999px;
+    }
+    .side-cards, .stack { display: flex; flex-direction: column; gap: 16px; }
+    .card {
+      border: 1px solid #e7e5e4;
+      background: #fafaf9;
+      border-radius: 28px;
+      padding: 22px;
+    }
+    .card h3, .result-title, .section-title { margin: 0 0 12px; font-size: 18px; }
+    .card ul { margin: 0; padding-left: 18px; color: #57534e; line-height: 1.9; }
+
+    .intro, .question-screen, .result-screen { padding: 40px; }
+    .intro-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0,1fr));
+      gap: 16px;
+      margin-top: 28px;
+    }
+    .intro h2 { margin: 8px 0 0; font-size: 38px; }
+
+    .question-top {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .question-top h2 { margin: 4px 0 0; font-size: 30px; }
+    .progress-wrap {
+      margin-top: 22px;
+      height: 8px;
+      background: #f5f5f4;
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .progress-bar {
+      height: 100%;
+      width: 0;
+      background: #1c1917;
+      transition: width .25s ease;
+      border-radius: 999px;
+    }
+    .question-layout {
+      display: grid;
+      grid-template-columns: .95fr 1.05fr;
+      gap: 24px;
+      margin-top: 30px;
+    }
+    .question-panel {
+      border: 1px solid #e7e5e4;
+      background: #fafaf9;
+      border-radius: 28px;
+      padding: 28px;
+    }
+    .tag {
+      display: inline-flex;
+      background: white;
+      border: 1px solid #e7e5e4;
+      border-radius: 999px;
+      color: #78716c;
+      font-size: 12px;
+      padding: 7px 12px;
+      font-weight: 600;
+    }
+    .question-title {
+      margin: 20px 0 0;
+      font-size: 28px;
+      line-height: 1.6;
+      letter-spacing: -.01em;
+    }
+    .question-copy { margin-top: 18px; font-size: 15px; color: #78716c; line-height: 1.95; }
+    .options { display: flex; flex-direction: column; gap: 12px; }
+    .option {
+      width: 100%;
+      padding: 18px 20px;
+      border-radius: 22px;
+      border: 1px solid #e7e5e4;
+      background: white;
+      color: #44403c;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      text-align: left;
+      cursor: pointer;
+      transition: all .2s ease;
+      font-size: 16px;
+      line-height: 1.8;
+      font-weight: 600;
+    }
+    .option:hover { border-color: #a8a29e; background: #fafaf9; }
+    .option.active {
+      border-color: #78716c;
+      background: #f5f5f4;
+      color: #1c1917;
+      box-shadow: 0 4px 16px rgba(28,25,23,.06);
+    }
+    .radio {
+      width: 20px;
+      height: 20px;
+      border-radius: 999px;
+      border: 1px solid #d6d3d1;
+      background: white;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .option.active .radio {
+      background: #44403c;
+      border-color: #44403c;
+    }
+    .radio::after {
+      content: "";
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: transparent;
+    }
+    .option.active .radio::after { background: white; }
+    .question-actions {
+      margin-top: 28px;
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+
+    .result-grid-top, .result-grid-main {
+      display: grid;
+      gap: 16px;
+    }
+    .result-grid-top { grid-template-columns: 1.1fr .9fr; }
+    .result-grid-main { grid-template-columns: 1.1fr .9fr; margin-top: 16px; }
+    .result-hero {
+      color: #1c1917;
+      border-radius: 28px;
+      padding: 28px;
+      border: 1px solid #e7e5e4;
+    }
+    .result-hero.theme-high {
+      background: #ecfdf3;
+      border-color: #b7ebc6;
+    }
+    .result-hero.theme-mid {
+      background: #fff8e8;
+      border-color: #f3d999;
+    }
+    .result-hero.theme-low {
+      background: #fff1f1;
+      border-color: #efb4b4;
+    }
+    .result-hero small { color: #57534e; letter-spacing: .18em; }
+    .result-hero h2 { font-size: 54px; margin: 16px 0 0; }
+    .result-hero p { color: #44403c; line-height: 1.8; }
+    .metrics {
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0,1fr));
+      gap: 12px;
+    }
+    .metric {
+      background: rgba(255,255,255,.55);
+      border: 1px solid rgba(28,25,23,.10);
+      border-radius: 20px;
+      padding: 16px;
+    }
+    .metric small { color: #57534e; letter-spacing: normal; }
+    .metric strong { display: block; margin-top: 10px; font-size: 28px; }
+    .weakness-list { display: flex; flex-direction: column; gap: 16px; margin-top: 20px; }
+    .weakness-item {
+      border: 1px solid #e7e5e4;
+      background: #fafaf9;
+      border-radius: 22px;
+      padding: 18px;
+    }
+    .weakness-head {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-bottom: 6px;
+    }
+    .weakness-head strong { font-size: 16px; }
+    .weakness-head span { color: #78716c; font-size: 14px; }
+    .contact-box {
+      margin-top: 18px;
+      background: #fafaf9;
+      border-radius: 22px;
+      padding: 16px;
+      color: #44403c;
+      line-height: 1.9;
+      font-size: 14px;
+    }
+    .footnote {
+      margin-top: 16px;
+      border: 1px solid #e7e5e4;
+      background: #fafaf9;
+      border-radius: 24px;
+      padding: 18px;
+      color: #78716c;
+      line-height: 1.9;
+      font-size: 14px;
+    }
+
+    @media (max-width: 900px) {
+      .home, .question-layout, .result-grid-top, .result-grid-main, .intro-grid {
+        grid-template-columns: 1fr;
+      }
+      .hero-title { font-size: 48px; }
+      .question-title { font-size: 24px; }
+      .metrics { grid-template-columns: 1fr; }
+      .app { padding: 16px; }
+      .intro, .question-screen, .result-screen, .home { padding: 24px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <h1>离婚力量表网页端</h1>
+      </div>
+      <div class="tabs">
+        <button class="tab active" data-screen="home">首页</button>
+        <button class="tab" data-screen="intro" disabled>说明页</button>
+        <button class="tab" data-screen="question" disabled>答题页</button>
+        <button class="tab" data-screen="result" disabled>结果页</button>
+      </div>
+    </header>
+
+    <main class="shell">
+      <section id="home" class="screen active home">
+        <div>
+          <div class="pill">结构化自测工具 · 面向离婚前准备评估</div>
+          <div class="hero-title">离婚之前，<br>先测一测你是否真的准备好了。</div>
+          <div class="hero-copy">从心理承受、经济准备、法律认知、子女安排到跨境风险，系统评估您当前的离婚准备状态。测评结果可用于自我梳理，也可作为后续律师咨询的前置信息。</div>
+          <div class="actions">
+            <button class="btn primary" id="startIntroBtn">开始测评</button>
+          </div>
+          <div class="meta-list">
+            <div class="meta-item">测试时长：约 5–8 分钟</div>
+            <div class="meta-item">按最近一个月的实际情况作答</div>
+            <div class="meta-item">结果可生成图片保存</div>
+            <div class="meta-item">仅用于个人评估与咨询参考</div>
+          </div>
+        </div>
+        <div class="side-cards">
+          <div class="card">
+            <h3>这份测评会帮你看清什么</h3>
+            <ul>
+              <li>你当前是否适合推进离婚</li>
+              <li>哪些环节是短板与高风险点</li>
+              <li>下一步更适合优先补强什么</li>
+              <li>是否需要尽快进入律师咨询</li>
+            </ul>
+          </div>
+          <div class="card" style="background:#fff;">
+            <h3>边界说明</h3>
+            <p>本测评仅作自我评估与后续咨询参考，不构成正式法律意见、心理诊断意见或移民意见。重大决策请结合专业人士建议。</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="intro" class="screen intro">
+        <small style="color:#78716c;letter-spacing:.18em;">测评说明</small>
+        <h2>在开始答题前，先确认这份测评如何使用</h2>
+        <div class="intro-copy" style="margin-top:16px;font-size:16px;">本量表用于从心理、经济、法律、子女安排、亲密关系及跨境事项等多个维度，帮助您评估当前应对离婚的综合准备能力与潜在风险。</div>
+        <div class="intro-grid">
+          <div class="card"><h3>作答说明</h3><p>请尽量根据最近一个月内的实际情况作答，不必过度斟酌，选择最符合当前状态的选项即可。</p></div>
+          <div class="card"><h3>不适用说明</h3><p>若某一题与您的实际情况无关，可选择“与本人情况无关”。该题不会计入总分，也不会影响对应维度均分。</p></div>
+          <div class="card"><h3>分流说明</h3><p>若您当前没有未成年子女，或婚姻不涉及跨境因素，系统将在答题过程中自动跳过对应部分。</p></div>
+          <div class="card"><h3>结果说明</h3><p>系统将根据您实际参与计分的题目动态计算得分率，并给出当前阶段的准备等级与优先补强方向。</p></div>
+        </div>
+        <div class="card" style="margin-top:16px;background:#fff;">
+          <h3>边界提示</h3>
+          <p>本测评仅作自我评估与后续咨询参考，不构成正式法律意见、心理诊断意见或其他专业结论。重大决策请结合专业人士建议。</p>
+        </div>
+        <div class="actions">
+          <button class="btn" id="backHomeBtn">返回首页</button>
+          <button class="btn primary" id="startQuestionBtn">开始答题</button>
+        </div>
+      </section>
+
+      <section id="question" class="screen question-screen">
+        <div class="question-top">
+          <div>
+            <small style="color:#78716c;letter-spacing:.18em;">离婚力量评估</small>
+            <h2>请根据最近一个月的实际情况作答</h2>
+          </div>
+          <div id="questionCounter" style="color:#78716c;font-size:14px;"></div>
+        </div>
+        <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
+        <div class="question-layout">
+          <div class="question-panel">
+            <div class="tag" id="questionTag"></div>
+            <div class="question-title" id="questionTitle"></div>
+            <div class="question-copy" id="questionCopy"></div>
+          </div>
+          <div class="options" id="optionsBox"></div>
+        </div>
+        <div class="question-actions">
+          <button class="btn" id="prevBtn">上一题</button>
+          <button class="btn primary" id="nextBtn">下一题</button>
+        </div>
+      </section>
+
+      <section id="result" class="screen result-screen">
+        <div class="result-grid-top">
+          <div class="result-hero">
+            <small>您的离婚准备评估结果</small>
+            <h2 id="resultLevel"></h2>
+            <p id="resultSubtitle"></p>
+            <div class="metrics">
+              <div class="metric"><small>总分</small><strong id="metricTotal"></strong></div>
+              <div class="metric"><small>动态满分</small><strong id="metricFull"></strong></div>
+              <div class="metric"><small>得分率</small><strong id="metricRate"></strong></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="section-title">这意味着什么</div>
+            <p id="resultSummary"></p>
+          </div>
+        </div>
+        <div class="result-grid-main">
+          <div class="card" style="background:#fff;">
+            <div class="section-title">您当前最需要优先处理的环节</div>
+            <div class="weakness-list" id="weaknessList"></div>
+          </div>
+          <div class="stack">
+            <div class="card">
+              <div class="section-title">下一步更适合怎么做</div>
+              <p id="resultAction"></p>
+            </div>
+            <div class="card" style="background:#fff;">
+              <div class="section-title">如需进一步梳理您的离婚准备与推进方案</div>
+              <p>这份测评可以帮助您初步识别问题，但真正涉及离婚路径选择、财产安排、证据准备、子女协商或跨境风险时，仍需要结合您的具体情况做进一步判断。</p>
+              <div id="consultationStatus" class="dim-copy" style="display:none;color:#1c1917;font-weight:700;margin-top:8px;">已为您匹配律所专业人员。</div>
+              <div class="contact-box" id="consultationBox" style="display:none;">
+                <div>约面人员：XXX</div>
+                <div>微信：XXXXXX</div>
+                <div>备注：添加时可备注“离婚力量表测评”</div>
+              </div>
+              <div class="actions">
+                <button class="btn primary" id="consultBtn">预约咨询</button>
+                <button class="btn" id="downloadResultBtn">下载测评结果</button>
+                <button class="btn" id="restartBtn">重新测评</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="footnote">本测评仅用于个人自我评估与后续咨询参考，不构成正式法律意见、心理诊断意见或其他专业结论。重大决策请结合自身具体情况，并咨询律师、心理咨询师等专业人士。</div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    const LIKERT_OPTIONS = [
+      { label: '完全不符合', value: 1 },
+      { label: '不太符合', value: 2 },
+      { label: '一般', value: 3 },
+      { label: '基本符合', value: 4 },
+      { label: '完全符合', value: 5 },
+      { label: '与本人情况无关', value: 'na' },
+    ];
+
+    const DIMENSION_META = {
+      D1: { name: '心理素质与执行能力', hint: '该维度偏弱时，容易在冲突、拖延、情绪波动或外界干扰中消耗大量精力，影响离婚推进节奏。', action: '建议先梳理情绪承受与行动安排，在必要时借助律师或支持系统降低被动感。' },
+      D2: { name: '经济独立与财务规划能力', hint: '该维度偏弱时，离婚后的生活安排、财务稳定性与资产应对能力可能不足。', action: '建议尽快梳理财务现状、居住安排与基本生活支撑条件，并在必要时咨询律师评估财产策略。' },
+      D3: { name: '子女抚养与亲子关系处理', hint: '该维度偏弱时，抚养权安排、共同养育协商与后续亲子关系维持可能面临更大压力。', action: '建议尽早明确自身目标，并结合子女利益与现实资源咨询律师制定安排方案。' },
+      D4: { name: '婚姻中的经济控制感知', hint: '该维度偏弱时，您可能在共同财产控制、资产知情或债务风险方面处于不利位置。', action: '建议尽快在律师指导下梳理财产线索、识别控制风险，并视情况提前做好证据与保全准备。' },
+      D5: { name: '法律认知与风险应对能力', hint: '该维度偏弱时，您可能对离婚流程、证据准备、维权路径与对方策略识别不足。', action: '建议尽早咨询律师，避免因程序、证据或判断失误导致推进受阻。' },
+      D6: { name: '婚姻亲密关系与离婚动因', hint: '该维度偏弱时，离婚动因、关系牵制或亲密因素可能仍对您的判断和行动形成影响。', action: '建议先看清自己当前真正的推进动力与阻力，再决定后续节奏，必要时与专业人士讨论更稳妥的处理方式。' },
+      D7: { name: '跨境婚姻特别事项', hint: '该维度偏弱时，身份、签证、跨境子女安排或境外资产披露等问题可能成为离婚中的高风险环节。', action: '建议优先咨询具备跨境婚姻经验的律师，先明确身份与法律风险，再推进实质安排。' },
+    };
+
+    const RESULT_COPY = {
+      high: {
+        label: '准备充分',
+        subtitle: '您当前在离婚推进所需的若干核心环节上，整体准备度相对较高。',
+        summary: '从本次测评结果来看，您在心理承受、行动执行、法律认知、风险识别或资源准备等方面，已具备较好的基础。但这并不意味着离婚过程一定轻松，仍建议在正式推进前结合短板维度做最后一轮重点梳理。',
+        action: '建议您在正式推进离婚前，结合自身短板维度做最后一轮重点梳理，并尽早与专业律师确认关键路径。'
+      },
+      mid: {
+        label: '准备一般',
+        subtitle: '您已经具备部分离婚准备基础，但当前仍存在若干短板，可能影响后续推进效率与结果稳定性。',
+        summary: '从本次测评结果来看，您目前并非完全没有准备，但在部分关键维度上仍较薄弱。若直接进入协商、分居、起诉或财产博弈阶段，可能因准备不足而增加时间成本、情绪消耗或权益风险。',
+        action: '建议您先围绕短板维度补强准备，再在律师协助下判断最适合的离婚路径与推进节奏，避免在准备不足时被动应对。'
+      },
+      low: {
+        label: '准备不足',
+        subtitle: '您当前在离婚推进所需的多个关键环节上仍较薄弱，若贸然推进，可能面临较高的不确定性与实际风险。',
+        summary: '从本次测评结果来看，您目前可能在心理承受、执行能力、经济独立、法律准备、风险识别或关键关系处理等方面仍存在较明显短板。与其仓促启动，不如先把最核心的薄弱环节梳理清楚，在更稳的基础上做决定。',
+        action: '建议您优先寻求专业律师协助，先评估当前风险、明确关键问题与补强路径，再决定后续是否立即推进离婚安排。'
+      }
+    };
+
+    const FLOW = [
+      'D1_Q01','D1_Q02','D1_Q03','D1_Q04','D1_Q05','D1_Q06',
+      'D2_Q01','D2_Q02','D2_Q03','D2_Q04','D2_Q05','D2_Q06',
+      'SYS_CHILD_GATE',
+      'D3_Q01','D3_Q02','D3_Q03','D3_Q04',
+      'D4_Q01','D4_Q02','D4_Q03','D4_Q04','D4_Q05',
+      'D5_Q01','D5_Q02','D5_Q03','D5_Q04','D5_Q05',
+      'D6_Q01','D6_Q02','D6_Q03','D6_Q04',
+      'SYS_CROSS_BORDER_GATE',
+      'D7_Q01','D7_Q02','D7_Q03','D7_Q04',
+    ];
+
+    const QUESTIONS = [
+      { id:'D1_Q01', dimension:'D1', text:'面对离婚相关的争执或言语攻击，我能稳定情绪，聚焦问题解决而非情绪消耗。', reverse:false },
+      { id:'D1_Q02', dimension:'D1', text:'决定离婚后，我能拆解目标并稳步执行，同时坚定个人边界，抵御来自对方或家人的干扰。', reverse:false },
+      { id:'D1_Q03', dimension:'D1', text:'因离婚事宜，我常情绪低落、失眠，难以集中精力处理相关事务。', reverse:true },
+      { id:'D1_Q04', dimension:'D1', text:'我能高效处理递交材料、信息核对等离婚相关的简单事务。', reverse:false },
+      { id:'D1_Q05', dimension:'D1', text:'我仍对对方抱有感情，难以下定决心提出或推进离婚。', reverse:true },
+      { id:'D1_Q06', dimension:'D1', text:'即便担心对方的态度，我也能直面并主动推进离婚相关的讨论和行动。', reverse:false },
+      { id:'D2_Q01', dimension:'D2', text:'我对于家庭名下的房产、车辆存放信息，存款以及投资产品的具体登记信息（如登记在谁名下、密码）非常清楚。', reverse:false },
+      { id:'D2_Q02', dimension:'D2', text:'当家庭遇到收入中断、需要紧急用钱等突发财务危机时，我有信心主导应对方案。', reverse:false },
+      { id:'D2_Q03', dimension:'D2', text:'我参与甚至主导家庭的资本配置，包括投资、储蓄及结余资金的使用决策。', reverse:false },
+      { id:'D2_Q04', dimension:'D2', text:'我无法独立制定清晰的离婚后个人财务收支与资产规划方案。', reverse:true },
+      { id:'D2_Q05', dimension:'D2', text:'我有稳定的独立住所，或已制定清晰、可执行的分居居住方案。', reverse:false },
+      { id:'D2_Q06', dimension:'D2', text:'若失去对方的经济支持，我难以凭借自身维持当前的生活水准。', reverse:true },
+      { id:'SYS_CHILD_GATE', system:true, text:'您当前是否存在需要在离婚中一并考虑抚养、探望或共同养育安排的未成年子女？', options:[{label:'是',value:'yes'},{label:'否',value:'no'}], helper:'该问题仅用于判断是否需要进入子女相关评估，不计入结果分数。' },
+      { id:'D3_Q01', dimension:'D3', text:'我清楚自己争取或放弃抚养权的真实意愿，并能理性说明理由。', reverse:false },
+      { id:'D3_Q02', dimension:'D3', text:'在争取抚养权方面，我认为自己的资源、准备和应对能力弱于对方。', reverse:true },
+      { id:'D3_Q03', dimension:'D3', text:'我认为对方存在明显不利于子女成长的因素，子女由对方抚养风险较大。', reverse:false },
+      { id:'D3_Q04', dimension:'D3', text:'即使未获抚养权，我也有信心平和处理与前配偶的关系，并维持与子女的良好互动。', reverse:false },
+      { id:'D4_Q01', dimension:'D4', text:'我能自由支配夫妻共同财产中属于自己的合法份额。', reverse:false },
+      { id:'D4_Q02', dimension:'D4', text:'对方隐匿或独占公司股权、分红信息，我无法知晓相关资产真实情况及收益明细。', reverse:true },
+      { id:'D4_Q03', dimension:'D4', text:'家庭重大资产处置（如股权、房产、大额投资）需经我协商同意。', reverse:false },
+      { id:'D4_Q04', dimension:'D4', text:'我能及时察觉并掌握夫妻共同财产的处置、转移等相关情况。', reverse:false },
+      { id:'D4_Q05', dimension:'D4', text:'对方擅自以家庭名义对外举债、制造虚假债务，将债务压力转嫁于我并以此限制我的财务自由。', reverse:true },
+      { id:'D5_Q01', dimension:'D5', text:'我清楚离婚的法定流程和办理方式。', reverse:false },
+      { id:'D5_Q02', dimension:'D5', text:'我已经主动整理关键证据（如家暴记录、转账凭证、聊天记录等）和重要证件信息（银行卡、结婚证、护照等）并妥善保存。', reverse:false },
+      { id:'D5_Q03', dimension:'D5', text:'我能识别对方拖延离婚的策略，并知道依法采取应对措施。', reverse:false },
+      { id:'D5_Q04', dimension:'D5', text:'若对方在网络上散布我的隐私或诽谤，我知道如何取证、并维权。', reverse:false },
+      { id:'D5_Q05', dimension:'D5', text:'我能接受法院判决的财产分割结果可能远低于我的预期，不会因此放弃离婚或采取极端行为。', reverse:false },
+      { id:'D6_Q01', dimension:'D6', text:'我与对方存在稳定的性亲密互动。（一周一次：完全符合；每月3次：基本符合；每月2次：一般；每月少于2次：不太符合；基本无性生活：完全不符合）', reverse:true },
+      { id:'D6_Q02', dimension:'D6', text:'跟对方的亲密关系偶尔会让我重新思考或者拖延离婚的决心。', reverse:true },
+      { id:'D6_Q03', dimension:'D6', text:'因生理因素导致的性欲减退或性生活困难，增强了我考虑离婚的倾向。', reverse:false },
+      { id:'D6_Q04', dimension:'D6', text:'婚外亲密关系的存在让我更倾向于结束当前婚姻关系。', reverse:false },
+      { id:'SYS_CROSS_BORDER_GATE', system:true, text:'您的婚姻是否涉及跨境因素，例如中外婚姻、境外身份或居留、境外资产、子女境外身份或跨境居住安排等？', options:[{label:'是',value:'yes'},{label:'否',value:'no'}], helper:'该问题仅用于判断是否需要进入跨境事项评估，不计入结果分数。' },
+      { id:'D7_Q01', dimension:'D7', text:'即便离婚可能导致我的配偶签证或居留许可失效，但我也不会为此太过担心。', reverse:false },
+      { id:'D7_Q02', dimension:'D7', text:'离婚基本不会影响到子女的国外留居身份，也不会阻碍我带孩子跨境探亲、往返国内外。', reverse:false },
+      { id:'D7_Q03', dimension:'D7', text:'即便对方利用语言文化优势，通过藏匿证件或虚假举报、虚假诉讼等方式来要挟我，我也不会放弃离婚或接受不利条件。', reverse:false },
+      { id:'D7_Q04', dimension:'D7', text:'对方可能会利用跨境离婚财产披露制度，获取我在其他国家或地区的财产线索。', reverse:true },
+    ];
+
+    const QUESTION_MAP = Object.fromEntries(QUESTIONS.map(q => [q.id, q]));
+
+    const state = {
+      screen: 'home',
+      unlocked: ['home'],
+      answers: {},
+      currentIndex: 0,
+      consultationRevealed: false,
+    };
+
+    const screens = {
+      home: document.getElementById('home'),
+      intro: document.getElementById('intro'),
+      question: document.getElementById('question'),
+      result: document.getElementById('result'),
+    };
+
+    function isUnlocked(key) {
+      return state.unlocked.includes(key);
+    }
+
+    function unlockUntil(key) {
+      const order = ['home', 'intro', 'question', 'result'];
+      state.unlocked = order.slice(0, order.indexOf(key) + 1);
+      renderTabs();
+    }
+
+    function setScreen(key) {
+      if (!isUnlocked(key)) return;
+      state.screen = key;
+      Object.entries(screens).forEach(([name, el]) => {
+        const active = name === key;
+        el.classList.toggle('active', active);
+        if (name === 'home') {
+          el.style.display = active ? 'grid' : 'none';
+        } else {
+          el.style.display = active ? 'block' : 'none';
+        }
+      });
+      renderTabs();
+      if (key === 'question') renderQuestion();
+      if (key === 'result') renderResult();
+      window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+    }
+
+    function renderTabs() {
+      document.querySelectorAll('.tab').forEach(btn => {
+        const key = btn.dataset.screen;
+        btn.disabled = !isUnlocked(key);
+        btn.classList.toggle('active', state.screen === key);
+      });
+    }
+
+    function getVisibleIds() {
+      return FLOW.filter(id => {
+        if (id.startsWith('D3_') && state.answers.SYS_CHILD_GATE === 'no') return false;
+        if (id.startsWith('D7_') && state.answers.SYS_CROSS_BORDER_GATE === 'no') return false;
+        return true;
+      });
+    }
+
+    function getScore(value, reverse) {
+      if (value === 'na' || value === undefined || value === null || typeof value !== 'number') return null;
+      return reverse ? 6 - value : value;
+    }
+
+    function renderQuestion() {
+      const visibleIds = getVisibleIds();
+      if (state.currentIndex >= visibleIds.length) state.currentIndex = visibleIds.length - 1;
+      const id = visibleIds[state.currentIndex];
+      const q = QUESTION_MAP[id];
+      const answer = state.answers[id];
+      const isLast = state.currentIndex === visibleIds.length - 1;
+
+      document.getElementById('questionCounter').textContent = `第 ${state.currentIndex + 1} / ${visibleIds.length} 题`;
+      document.getElementById('progressBar').style.width = `${((state.currentIndex + 1) / visibleIds.length) * 100}%`;
+      document.getElementById('questionTag').textContent = q.system ? '系统分流题 · 不计分' : `当前维度 · ${DIMENSION_META[q.dimension].name}`;
+      document.getElementById('questionTitle').textContent = q.text;
+      document.getElementById('questionCopy').textContent = q.system
+        ? `请您根据自身真实情况如实作答。${q.helper}`
+        : '请您根据自身真实情况如实作答。若题目与您无关，可直接选择“与本人情况无关”。';
+
+      const optionsBox = document.getElementById('optionsBox');
+      optionsBox.innerHTML = '';
+      (q.options || LIKERT_OPTIONS).forEach(opt => {
+        const btn = document.createElement('button');
+        btn.className = 'option' + (answer === opt.value ? ' active' : '');
+        btn.innerHTML = `<span>${opt.label}</span><span class="radio"></span>`;
+        btn.addEventListener('click', () => {
+          state.answers[id] = opt.value;
+          if (id === 'SYS_CHILD_GATE' && opt.value === 'no') {
+            ['D3_Q01','D3_Q02','D3_Q03','D3_Q04'].forEach(k => delete state.answers[k]);
+          }
+          if (id === 'SYS_CROSS_BORDER_GATE' && opt.value === 'no') {
+            ['D7_Q01','D7_Q02','D7_Q03','D7_Q04'].forEach(k => delete state.answers[k]);
+          }
+          renderQuestion();
+        });
+        optionsBox.appendChild(btn);
+      });
+
+      const prevBtn = document.getElementById('prevBtn');
+      const nextBtn = document.getElementById('nextBtn');
+      prevBtn.disabled = state.currentIndex === 0;
+      nextBtn.disabled = answer === undefined;
+      nextBtn.textContent = isLast ? '提交并查看结果' : '下一题';
+    }
+
+    function computeResult() {
+      const skipped = {
+        D3: state.answers.SYS_CHILD_GATE === 'no',
+        D7: state.answers.SYS_CROSS_BORDER_GATE === 'no',
+      };
+      const dimensions = Object.fromEntries(Object.entries(DIMENSION_META).map(([code, meta]) => [code, {
+        code, name: meta.name, total: 0, count: 0, avg: null, skipped: !!skipped[code]
+      }]));
+      let totalScore = 0;
+      let effectiveCount = 0;
+
+      QUESTIONS.forEach(q => {
+        if (q.system) return;
+        if (dimensions[q.dimension].skipped) return;
+        const score = getScore(state.answers[q.id], q.reverse);
+        if (score === null) return;
+        totalScore += score;
+        effectiveCount += 1;
+        dimensions[q.dimension].total += score;
+        dimensions[q.dimension].count += 1;
+      });
+
+      Object.values(dimensions).forEach(d => {
+        if (!d.skipped && d.count > 0) d.avg = d.total / d.count;
+      });
+
+      const dynamicFullScore = effectiveCount * 5;
+      const scoreRate = dynamicFullScore > 0 ? totalScore / dynamicFullScore * 100 : 0;
+      const levelKey = scoreRate > 80 ? 'high' : scoreRate >= 60 ? 'mid' : 'low';
+
+      let weaknesses = Object.values(dimensions)
+        .filter(d => !d.skipped && d.avg !== null && d.avg < 3)
+        .sort((a,b) => a.avg - b.avg);
+      if (!weaknesses.length) {
+        weaknesses = Object.values(dimensions)
+          .filter(d => !d.skipped && d.avg !== null)
+          .sort((a,b) => a.avg - b.avg)
+          .slice(0, 2);
+      }
+      weaknesses = weaknesses.slice(0, 3).map(d => ({
+        ...d,
+        hint: DIMENSION_META[d.code].hint,
+        action: DIMENSION_META[d.code].action,
+      }));
+
+      return { totalScore, dynamicFullScore, scoreRate, level: RESULT_COPY[levelKey], weaknesses };
+    }
+
+    function renderResult() {
+      const result = computeResult();
+      document.getElementById('resultLevel').textContent = result.level.label;
+      document.getElementById('resultSubtitle').textContent = result.level.subtitle;
+      document.getElementById('metricTotal').textContent = result.totalScore;
+      document.getElementById('metricFull').textContent = result.dynamicFullScore;
+      document.getElementById('metricRate').textContent = `${result.scoreRate.toFixed(1)}%`;
+      document.getElementById('resultSummary').textContent = result.level.summary;
+      document.getElementById('resultAction').textContent = result.level.action;
+
+      const hero = document.querySelector('.result-hero');
+      hero.classList.remove('theme-high', 'theme-mid', 'theme-low');
+      if (result.level.label === '准备充分') hero.classList.add('theme-high');
+      if (result.level.label === '准备一般') hero.classList.add('theme-mid');
+      if (result.level.label === '准备不足') hero.classList.add('theme-low');
+
+      document.getElementById('consultationStatus').style.display = state.consultationRevealed ? 'block' : 'none';
+      document.getElementById('consultationBox').style.display = state.consultationRevealed ? 'block' : 'none';
+
+      const box = document.getElementById('weaknessList');
+      box.innerHTML = '';
+      result.weaknesses.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'weakness-item';
+        div.innerHTML = `
+          <div class="weakness-head">
+            <strong>${item.name}</strong>
+            <span>均分 ${item.avg.toFixed(1)}</span>
+          </div>
+          <div class="dim-copy">${item.hint}</div>
+          <div class="dim-copy" style="color:#292524;margin-top:6px;">${item.action}</div>
+        `;
+        box.appendChild(div);
+      });
+    }
+
+    document.getElementById('startIntroBtn').addEventListener('click', () => {
+      unlockUntil('intro');
+      setScreen('intro');
+    });
+
+    document.getElementById('backHomeBtn').addEventListener('click', () => setScreen('home'));
+
+    document.getElementById('startQuestionBtn').addEventListener('click', () => {
+      unlockUntil('question');
+      state.currentIndex = 0;
+      setScreen('question');
+    });
+
+    document.getElementById('prevBtn').addEventListener('click', () => {
+      state.currentIndex = Math.max(0, state.currentIndex - 1);
+      renderQuestion();
+    });
+
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      const visibleIds = getVisibleIds();
+      const id = visibleIds[state.currentIndex];
+      if (state.answers[id] === undefined) return;
+      const isLast = state.currentIndex === visibleIds.length - 1;
+      if (isLast) {
+        unlockUntil('result');
+        setScreen('result');
+      } else {
+        state.currentIndex = Math.min(visibleIds.length - 1, state.currentIndex + 1);
+        renderQuestion();
+      }
+    });
+
+    document.getElementById('restartBtn').addEventListener('click', () => {
+      state.answers = {};
+      state.currentIndex = 0;
+      state.unlocked = ['home'];
+      state.consultationRevealed = false;
+      renderTabs();
+      setScreen('home');
+    });
+
+    document.getElementById('consultBtn').addEventListener('click', () => {
+      state.consultationRevealed = true;
+      renderResult();
+    });
+
+    document.getElementById('downloadResultBtn').addEventListener('click', () => {
+      const result = computeResult();
+      const canvas = document.createElement('canvas');
+      canvas.width = 1200;
+      canvas.height = 1600;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) return;
+
+      ctx.fillStyle = '#f7f6f3';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      ctx.fillStyle = '#1c1917';
+      ctx.font = '700 64px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif';
+      ctx.fillText('离婚力量表测评结果', 88, 120);
+
+      ctx.fillStyle = '#44403c';
+      ctx.font = '400 30px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif';
+      ctx.fillText('当前结果', 88, 200);
+
+      ctx.fillStyle = '#1c1917';
+      ctx.font = '700 84px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif';
+      ctx.fillText(result.level.label, 88, 300);
+
+      ctx.fillStyle = '#57534e';
+      ctx.font = '400 34px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif';
+      ctx.fillText(`得分率：${result.scoreRate.toFixed(1)}%`, 88, 380);
+      ctx.fillText(`总分：${result.totalScore} / ${result.dynamicFullScore}`, 88, 435);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(88, 500, 1024, 760);
+      ctx.strokeStyle = '#e7e5e4';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(88, 500, 1024, 760);
+
+      ctx.fillStyle = '#1c1917';
+      ctx.font = '700 42px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif';
+      ctx.fillText('优先补强方向', 128, 570);
+
+      const wrapText = (text, x, y, maxWidth, lineHeight) => {
+        const chars = text.split('');
+        let line = '';
+        for (let i = 0; i < chars.length; i++) {
+          const testLine = line + chars[i];
+          if (ctx.measureText(testLine).width > maxWidth && line) {
+            ctx.fillText(line, x, y);
+            line = chars[i];
+            y += lineHeight;
+          } else {
+            line = testLine;
+          }
+        }
+        if (line) ctx.fillText(line, x, y);
+        return y;
+      };
+
+      let y = 650;
+      result.weaknesses.forEach((item, index) => {
+        ctx.fillStyle = '#1c1917';
+        ctx.font = '700 34px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif';
+        ctx.fillText(`${index + 1}. ${item.name}`, 128, y);
+        y += 52;
+        ctx.fillStyle = '#57534e';
+        ctx.font = '400 28px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif';
+        y = wrapText(item.hint, 128, y, 920, 44) + 22;
+        y = wrapText(item.action, 128, y, 920, 44) + 54;
+      });
+
+      ctx.fillStyle = '#1c1917';
+      ctx.font = '700 34px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif';
+      ctx.fillText('进一步咨询', 88, 1360);
+      ctx.fillStyle = '#57534e';
+      ctx.font = '400 28px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif';
+      ctx.fillText('如需进一步梳理离婚准备与推进方案，可联系律所专业人员。', 88, 1420);
+      ctx.fillText('约面人员：XXX    微信：XXXXXX', 88, 1475);
+
+      ctx.fillStyle = '#78716c';
+      ctx.font = '400 24px -apple-system, BlinkMacSystemFont, PingFang SC, Microsoft YaHei, sans-serif';
+      ctx.fillText('本测评仅用于个人自我评估与后续咨询参考，不构成正式法律意见。', 88, 1545);
+
+      const link = document.createElement('a');
+      link.download = '离婚力量表测评结果海报.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    });
+
+    document.querySelectorAll('.tab').forEach(btn => {
+      btn.addEventListener('click', () => setScreen(btn.dataset.screen));
+    });
+
+    renderTabs();
+  </script>
+</body>
+</html>
