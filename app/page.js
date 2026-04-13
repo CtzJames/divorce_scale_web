@@ -1,13 +1,29 @@
+import { DIMENSION_META, LIKERT_OPTIONS } from "../data/questions.js";
+import { RESULT_COPY } from "../data/resultCopy.js";
+import { formatRate, getLevelKey, getScore } from "../lib/scoring.js";
+
 export default function HomePage() {
+  const demoRate = 73.5;
+  const levelKey = getLevelKey(demoRate);
+  const level = RESULT_COPY[levelKey];
+  const demoScore = getScore(4, false);
+
   return (
     <main className="page-shell">
       <section className="hero-card">
         <div className="hero-tag">离婚力量表网页端</div>
-        <h1>Next.js 项目骨架已建立</h1>
+        <h1>项目迁移第一步已完成</h1>
         <p>
-          当前仓库已经从单文件静态网页，迁移到了正式前端项目结构。
-          下一步将继续把原型页面拆分为首页、说明页、答题页、结果页，并逐步接入计分逻辑与数据库。
+          当前已经把结果文案、维度配置与基础计分函数从页面中拆分出来，进入了正式的模块化开发阶段。
         </p>
+
+        <div style={{ marginTop: 24, lineHeight: 2 }}>
+          <div>当前演示结果等级：{level.label}</div>
+          <div>当前演示得分率：{formatRate(demoRate)}</div>
+          <div>单题演示计分：{demoScore}</div>
+          <div>当前维度数量：{Object.keys(DIMENSION_META).length}</div>
+          <div>当前标准选项数量：{LIKERT_OPTIONS.length}</div>
+        </div>
       </section>
     </main>
   );
