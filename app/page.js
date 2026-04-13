@@ -1,26 +1,28 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import {
-  DIMENSION_META,
-  FLOW,
-  LIKERT_OPTIONS,
-  QUESTIONS,
-  QUESTION_MAP,
-} from "../data/questions.js";
+import { DIMENSION_META, FLOW, QUESTIONS, QUESTION_MAP } from "../data/questions.js";
 import { RESULT_COPY } from "../data/resultCopy.js";
-import { formatRate, getLevelKey, getScore } from "../lib/scoring.js";
+import { getLevelKey, getScore } from "../lib/scoring.js";
+import { buildSubmissionPayload } from "../lib/buildSubmissionPayload.js";
+import { supabase } from "../lib/supabaseClient.js";
+import IntroScreen from "../components/IntroScreen.js";
+import QuestionScreen from "../components/QuestionScreen.js";
+import ResultScreen from "../components/ResultScreen.js";
 
 export default function HomePage() {
   const [step, setStep] = useState("intro");
   const [currentIndex, setCurrentIndex] = useState(0);
   const [answers, setAnswers] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submissionPreview, setSubmissionPreview] = useState(null);
 
   const visibleQuestionIds = useMemo(() => {
     return FLOW.filter((id) => {
       if (id.startsWith("D3_") && answers.SYS_CHILD_GATE === "no") return false;
-      if (id.startsWith("D7_") && answers.SYS_CROSS_BORDER_GATE === "no")
+      if (id.startsWith("D7_") && answers.SYS_CROSS_BORDER_GATE === "no") {
         return false;
+      }
       return true;
     });
   }, [answers]);
@@ -110,17 +112,18 @@ export default function HomePage() {
   const handleStart = () => {
     setStep("question");
     setCurrentIndex(0);
+    setSubmissionPreview(null);
   };
 
-  const handleAnswer = (value) => {
+  const handleAnswer = (questionId, value) => {
     setAnswers((prev) => {
-      const next = { ...prev, [currentQuestionId]: value };
+      const next = { ...prev, [questionId]: value };
 
-      if (currentQuestionId === "SYS_CHILD_GATE" && value === "no") {
+      if (questionId === "SYS_CHILD_GATE" && value === "no") {
         ["D3_Q01", "D3_Q02", "D3_Q03", "D3_Q04"].forEach((id) => delete next[id]);
       }
 
-      if (currentQuestionId === "SYS_CROSS_BORDER_GATE" && value === "no") {
+      if (questionId === "SYS_CROSS_BORDER_GATE" && value === "no") {
         ["D7_Q01", "D7_Q02", "D7_Q03", "D7_Q04"].forEach((id) => delete next[id]);
       }
 
@@ -149,7 +152,33 @@ export default function HomePage() {
     setStep("intro");
     setCurrentIndex(0);
     setAnswers({});
+    setSubmissionPreview(null);
   };
+
+const handleMockSubmit = async () => {
+  setIsSubmitting(true);
+
+  const payload = buildSubmissionPayload({
+    answers,
+    resultData,
+  });
+
+  const { error } = await supabase.from("assessment_results").insert({
+    result_label: payload.resultLabel,
+    answers: payload.answers,
+  });
+
+  if (error) {
+    console.error("提交失败：", error);
+    alert("提交失败，请检查 Supabase 配置或表权限。");
+    setIsSubmitting(false);
+    return;
+  }
+
+  setSubmissionPreview(payload);
+  alert("提交成功，管理员现在可以在 Supabase 后台查看这条结果。");
+  setIsSubmitting(false);
+};
 
   const progress =
     visibleQuestionIds.length > 0
@@ -157,156 +186,68 @@ export default function HomePage() {
       : 0;
 
   if (step === "intro") {
-    return (
-      <main className="page-shell">
-        <section className="hero-card">
-          <div className="hero-tag">离婚力量表网页端</div>
-          <h1>离婚之前，先测一测你是否真的准备好了。</h1>
-          <p>
-            从心理承受、经济准备、法律认知、子女安排到跨境风险，系统评估您当前的离婚准备状态。测评结果可用于自我梳理，也可作为后续律师咨询的前置信息。
-          </p>
-
-          <div className="intro-actions">
-            <button className="primary-btn" onClick={handleStart}>
-              开始测评
-            </button>
-          </div>
-
-          <div className="intro-meta">
-            <span>测试时长：约 5–8 分钟</span>
-            <span>按最近一个月的实际情况作答</span>
-            <span>结果可生成图片保存</span>
-            <span>仅用于个人评估与咨询参考</span>
-          </div>
-        </section>
-      </main>
-    );
+    return <IntroScreen onStart={handleStart} />;
   }
 
   if (step === "question" && currentQuestion) {
     return (
-      <main className="page-shell">
-        <section className="quiz-card">
-          <div className="quiz-head">
-            <div>
-              <div className="hero-tag">
-                {currentQuestion.system
-                  ? "系统分流题 · 不计分"
-                  : `当前维度 · ${DIMENSION_META[currentQuestion.dimension].name}`}
-              </div>
-              <h1 className="quiz-title">{currentQuestion.text}</h1>
-              <p className="quiz-copy">
-                请您根据自身真实情况如实作答。
-                {currentQuestion.system
-                  ? currentQuestion.helper
-                  : "若题目与您无关，可直接选择“与本人情况无关”。"}
-              </p>
-            </div>
-            <div className="counter-box">
-              第 {currentIndex + 1} / {visibleQuestionIds.length} 题
-            </div>
-          </div>
-
-          <div className="progress-wrap">
-            <div
-              className="progress-bar"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-
-          <div className="option-list">
-            {(currentQuestion.options || LIKERT_OPTIONS).map((item) => {
-              const active = currentAnswer === item.value;
-              return (
-                <button
-                  key={item.label}
-                  className={`option-item ${active ? "active" : ""}`}
-                  onClick={() => handleAnswer(item.value)}
-                >
-                  <span>{item.label}</span>
-                  <span className="radio-dot" />
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="bottom-actions">
-            <button
-              className="secondary-btn"
-              onClick={handlePrev}
-              disabled={currentIndex === 0}
-            >
-              上一题
-            </button>
-
-            <button
-              className="primary-btn"
-              onClick={handleNext}
-              disabled={currentAnswer === undefined}
-            >
-              {isLastQuestion ? "提交并查看结果" : "下一题"}
-            </button>
-          </div>
-        </section>
-      </main>
+      <QuestionScreen
+        currentQuestion={currentQuestion}
+        currentQuestionId={currentQuestionId}
+        currentIndex={currentIndex}
+        visibleQuestionIds={visibleQuestionIds}
+        currentAnswer={currentAnswer}
+        progress={progress}
+        onAnswer={handleAnswer}
+        onPrev={handlePrev}
+        onNext={handleNext}
+      />
     );
   }
 
   return (
-    <main className="page-shell">
-      <section className="result-layout">
-        <div className={`result-hero theme-${resultData.levelKey}`}>
-          <div className="result-label">您的离婚准备评估结果</div>
-          <h1>{resultData.level.label}</h1>
-          <p>{resultData.level.subtitle}</p>
+    <>
+      <ResultScreen
+        resultData={resultData}
+        onRestart={handleRestart}
+        onMockSubmit={handleMockSubmit}
+        isSubmitting={isSubmitting}
+      />
 
-          <div className="result-metrics">
-            <div className="metric-card">
-              <span>总分</span>
-              <strong>{resultData.totalScore}</strong>
-            </div>
-            <div className="metric-card">
-              <span>动态满分</span>
-              <strong>{resultData.dynamicFullScore}</strong>
-            </div>
-            <div className="metric-card">
-              <span>得分率</span>
-              <strong>{formatRate(resultData.scoreRate)}</strong>
-            </div>
+      {submissionPreview && (
+        <section
+          style={{
+            maxWidth: "1080px",
+            margin: "-12px auto 32px",
+            padding: "0 32px",
+          }}
+        >
+          <div
+            style={{
+              background: "#ffffff",
+              border: "1px solid #e7e5e4",
+              borderRadius: "24px",
+              padding: "24px",
+              boxShadow: "0 12px 40px rgba(28, 25, 23, 0.06)",
+            }}
+          >
+            <h2 style={{ margin: 0, fontSize: "18px" }}>前端提交对象预览</h2>
+            <pre
+              style={{
+                marginTop: "16px",
+                background: "#fafaf9",
+                borderRadius: "16px",
+                padding: "16px",
+                overflowX: "auto",
+                fontSize: "14px",
+                lineHeight: 1.7,
+              }}
+            >
+              {JSON.stringify(submissionPreview, null, 2)}
+            </pre>
           </div>
-        </div>
-
-        <div className="result-side-card">
-          <h2>这意味着什么</h2>
-          <p>{resultData.level.summary}</p>
-        </div>
-
-        <div className="result-main-card">
-          <h2>您当前最需要优先处理的环节</h2>
-          <div className="weakness-list">
-            {resultData.weaknesses.map((item) => (
-              <div key={item.code} className="weakness-item">
-                <div className="weakness-head">
-                  <strong>{item.name}</strong>
-                  <span>均分 {item.avg.toFixed(1)}</span>
-                </div>
-                <p>{item.hint}</p>
-                <p className="emphasis">{item.action}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div className="result-side-card">
-          <h2>下一步更适合怎么做</h2>
-          <p>{resultData.level.action}</p>
-          <div className="intro-actions">
-            <button className="primary-btn" onClick={handleRestart}>
-              重新测评
-            </button>
-          </div>
-        </div>
-      </section>
-    </main>
+        </section>
+      )}
+    </>
   );
 }
