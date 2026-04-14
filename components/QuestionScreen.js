@@ -40,10 +40,7 @@ export default function QuestionScreen({
         </div>
 
         <div className="progress-wrap">
-          <div
-            className="progress-bar"
-            style={{ width: `${progress}%` }}
-          ></div>
+          <div className="progress-bar" style={{ width: `${progress}%` }}></div>
         </div>
 
         <div className="option-list">
@@ -80,7 +77,7 @@ export default function QuestionScreen({
             onClick={onNext}
             disabled={currentAnswer === undefined}
           >
-            {isLastQuestion ? "提交并查看结果" : "下一题"}
+            {isLastQuestion ? "查看结果" : "下一题"}
           </button>
         </div>
       </section>

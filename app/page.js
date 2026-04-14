@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useRef, useState } from "react";
-import { DIMENSION_META, FLOW, QUESTIONS, QUESTION_MAP } from "../data/questions.js";
+import { DIMENSION_META, QUESTIONS, QUESTION_MAP } from "../data/questions.js";
 import { RESULT_COPY } from "../data/resultCopy.js";
 import { getLevelKey, getScore } from "../lib/scoring.js";
 import { buildSubmissionPayload } from "../lib/buildSubmissionPayload.js";
@@ -10,30 +10,75 @@ import IntroScreen from "../components/IntroScreen.js";
 import QuestionScreen from "../components/QuestionScreen.js";
 import ResultScreen from "../components/ResultScreen.js";
 
+const SYSTEM_QUESTION_IDS = ["SYS_CHILD_GATE", "SYS_CROSS_BORDER_GATE"];
+
+function shuffleQuestionIds(questionIds) {
+    const shuffled = [...questionIds];
+    for (let i = shuffled.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    return shuffled;
+}
+
+function filterInapplicableAnswers(nextAnswers) {
+    const filtered = { ...nextAnswers };
+
+    if (filtered.SYS_CHILD_GATE === "no") {
+        Object.keys(filtered).forEach((key) => {
+            if (key.startsWith("D3_")) delete filtered[key];
+        });
+    }
+
+    if (filtered.SYS_CROSS_BORDER_GATE === "no") {
+        Object.keys(filtered).forEach((key) => {
+            if (key.startsWith("D7_")) delete filtered[key];
+        });
+    }
+
+    return filtered;
+}
+
+function buildSessionQuestionIds(answers) {
+    const safeAnswers = answers ?? {};
+    const hasChildGate =
+        safeAnswers.SYS_CHILD_GATE === "yes" || safeAnswers.SYS_CHILD_GATE === "no";
+    const hasCrossBorderGate =
+        safeAnswers.SYS_CROSS_BORDER_GATE === "yes" ||
+        safeAnswers.SYS_CROSS_BORDER_GATE === "no";
+
+    if (!hasChildGate || !hasCrossBorderGate) {
+        return SYSTEM_QUESTION_IDS;
+    }
+
+    const includeD3 = safeAnswers.SYS_CHILD_GATE !== "no";
+    const includeD7 = safeAnswers.SYS_CROSS_BORDER_GATE !== "no";
+
+    const regularQuestionIds = QUESTIONS.filter((q) => {
+        if (q.system) return false;
+        if (!includeD3 && q.dimension === "D3") return false;
+        if (!includeD7 && q.dimension === "D7") return false;
+        return true;
+    }).map((q) => q.id);
+
+    return [...SYSTEM_QUESTION_IDS, ...shuffleQuestionIds(regularQuestionIds)];
+}
+
 export default function HomePage() {
     const [step, setStep] = useState("intro");
     const [currentIndex, setCurrentIndex] = useState(0);
     const [answers, setAnswers] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hasSubmitted, setHasSubmitted] = useState(false);
-    
+    const [sessionQuestionIds, setSessionQuestionIds] = useState(SYSTEM_QUESTION_IDS);
 
     const submitLockRef = useRef(false);
+    const autoNextTimerRef = useRef(null);
 
-    const visibleQuestionIds = useMemo(() => {
-        return FLOW.filter((id) => {
-            if (id.startsWith("D3_") && answers.SYS_CHILD_GATE === "no") return false;
-            if (id.startsWith("D7_") && answers.SYS_CROSS_BORDER_GATE === "no") {
-                return false;
-            }
-            return true;
-        });
-    }, [answers]);
-
-    const currentQuestionId = visibleQuestionIds[currentIndex];
+    const currentQuestionId = sessionQuestionIds[currentIndex];
     const currentQuestion = QUESTION_MAP[currentQuestionId];
     const currentAnswer = answers[currentQuestionId];
-    const isLastQuestion = currentIndex === visibleQuestionIds.length - 1;
+    const isLastQuestion = currentIndex === sessionQuestionIds.length - 1;
 
     const resultData = useMemo(() => {
         const skippedDimensions = {
@@ -115,26 +160,49 @@ export default function HomePage() {
     const handleStart = () => {
         setStep("question");
         setCurrentIndex(0);
-        
+        setAnswers({});
+        setSessionQuestionIds(SYSTEM_QUESTION_IDS);
+        setHasSubmitted(false);
+        if (autoNextTimerRef.current) {
+            clearTimeout(autoNextTimerRef.current);
+            autoNextTimerRef.current = null;
+        }
     };
 
     const handleAnswer = (questionId, value) => {
-        setAnswers((prev) => {
-            const next = { ...prev, [questionId]: value };
+        const nextAnswers = filterInapplicableAnswers({ ...answers, [questionId]: value });
+        setAnswers(nextAnswers);
 
-            if (questionId === "SYS_CHILD_GATE" && value === "no") {
-                ["D3_Q01", "D3_Q02", "D3_Q03", "D3_Q04"].forEach((id) => delete next[id]);
-            }
+        const isSystemQuestion = SYSTEM_QUESTION_IDS.includes(questionId);
+        const nextSessionQuestionIds = isSystemQuestion
+            ? buildSessionQuestionIds(nextAnswers)
+            : sessionQuestionIds;
 
-            if (questionId === "SYS_CROSS_BORDER_GATE" && value === "no") {
-                ["D7_Q01", "D7_Q02", "D7_Q03", "D7_Q04"].forEach((id) => delete next[id]);
-            }
+        if (isSystemQuestion) {
+            setSessionQuestionIds(nextSessionQuestionIds);
+        }
 
-            return next;
-        });
+        const nextLength = nextSessionQuestionIds.length;
+        const shouldAutoAdvance = currentIndex < nextLength - 1;
+
+        if (autoNextTimerRef.current) {
+            clearTimeout(autoNextTimerRef.current);
+            autoNextTimerRef.current = null;
+        }
+
+        if (shouldAutoAdvance) {
+            autoNextTimerRef.current = setTimeout(() => {
+                setCurrentIndex((prev) => Math.min(prev + 1, nextLength - 1));
+                autoNextTimerRef.current = null;
+            }, 150);
+        }
     };
 
     const handlePrev = () => {
+        if (autoNextTimerRef.current) {
+            clearTimeout(autoNextTimerRef.current);
+            autoNextTimerRef.current = null;
+        }
         setCurrentIndex((prev) => Math.max(prev - 1, 0));
     };
 
@@ -147,7 +215,7 @@ export default function HomePage() {
         }
 
         setCurrentIndex((prev) =>
-            Math.min(prev + 1, visibleQuestionIds.length - 1)
+            Math.min(prev + 1, sessionQuestionIds.length - 1)
         );
     };
 
@@ -155,8 +223,13 @@ export default function HomePage() {
         setStep("intro");
         setCurrentIndex(0);
         setAnswers({});
+        setSessionQuestionIds(SYSTEM_QUESTION_IDS);
         setHasSubmitted(false);
         submitLockRef.current = false;
+        if (autoNextTimerRef.current) {
+            clearTimeout(autoNextTimerRef.current);
+            autoNextTimerRef.current = null;
+        }
     };
 
     const handleSubmitResult = async () => {
@@ -200,8 +273,8 @@ export default function HomePage() {
     };
 
     const progress =
-        visibleQuestionIds.length > 0
-            ? ((currentIndex + 1) / visibleQuestionIds.length) * 100
+        sessionQuestionIds.length > 0
+            ? ((currentIndex + 1) / sessionQuestionIds.length) * 100
             : 0;
 
     if (step === "intro") {
@@ -214,7 +287,7 @@ export default function HomePage() {
                 currentQuestion={currentQuestion}
                 currentQuestionId={currentQuestionId}
                 currentIndex={currentIndex}
-                visibleQuestionIds={visibleQuestionIds}
+                visibleQuestionIds={sessionQuestionIds}
                 currentAnswer={currentAnswer}
                 progress={progress}
                 onAnswer={handleAnswer}
