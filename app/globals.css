@@ -368,6 +368,40 @@ p {
   color: #57534e;
 }
 
+.contact-form-wrap {
+  margin-top: 12px;
+}
+
+.contact-form-grid {
+  display: grid;
+  gap: 10px;
+}
+
+.contact-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.contact-form-field span {
+  font-size: 13px;
+  color: #57534e;
+}
+
+.contact-form-field input {
+  border: 1px solid #d6d3d1;
+  border-radius: 8px;
+  padding: 10px 12px;
+  font-size: 14px;
+  color: #1c1917;
+  background: #fff;
+}
+
+.contact-form-field input:disabled {
+  background: #f5f5f4;
+  color: #78716c;
+}
+
 .submit-feedback-success {
   color: #166534;
 }

@@ -7,6 +7,9 @@ export default function ResultScreen({
     isSubmitting,
     hasSubmitted,
     submitFeedback,
+    contactForm,
+    contactFeedback,
+    onContactFieldChange,
 }) {
     return (
         <main className="page-shell">
@@ -59,6 +62,37 @@ export default function ResultScreen({
                     <p className="result-submit-tip">
                         {"\u63d0\u4ea4\u540e\u53ef\u4fdd\u5b58\u672c\u6b21\u6d4b\u8bc4\u7ed3\u679c\uff0c\u4fbf\u4e8e\u540e\u7eed\u67e5\u770b\u4e0e\u54a8\u8be2\u6c9f\u901a\u3002"}
                     </p>
+                    <div className="contact-form-wrap">
+                        <div className="contact-form-grid">
+                            <label className="contact-form-field">
+                                <span>{"\u79f0\u547c\uff08\u5fc5\u586b\uff09"}</span>
+                                <input
+                                    type="text"
+                                    value={contactForm.contact_name}
+                                    onChange={(e) =>
+                                        onContactFieldChange("contact_name", e.target.value)
+                                    }
+                                    disabled={isSubmitting || hasSubmitted}
+                                />
+                            </label>
+                            <label className="contact-form-field">
+                                <span>{"\u8054\u7cfb\u7535\u8bdd\uff08\u5fc5\u586b\uff09"}</span>
+                                <input
+                                    type="tel"
+                                    value={contactForm.contact_phone}
+                                    onChange={(e) =>
+                                        onContactFieldChange("contact_phone", e.target.value)
+                                    }
+                                    disabled={isSubmitting || hasSubmitted}
+                                />
+                            </label>
+                        </div>
+                        {contactFeedback?.type && (
+                            <p className="submit-feedback submit-feedback-error">
+                                {contactFeedback.message}
+                            </p>
+                        )}
+                    </div>
                     <div className="intro-actions">
                         <button
                             className="primary-btn"

@@ -74,6 +74,14 @@ export default function HomePage() {
         type: null,
         message: "",
     });
+    const [contactForm, setContactForm] = useState({
+        contact_name: "",
+        contact_phone: "",
+    });
+    const [contactFeedback, setContactFeedback] = useState({
+        type: null,
+        message: "",
+    });
     const [sessionQuestionIds, setSessionQuestionIds] = useState(SYSTEM_QUESTION_IDS);
 
     const submitLockRef = useRef(false);
@@ -229,6 +237,14 @@ export default function HomePage() {
         setAnswers({});
         setSessionQuestionIds(SYSTEM_QUESTION_IDS);
         setHasSubmitted(false);
+        setContactForm({
+            contact_name: "",
+            contact_phone: "",
+        });
+        setContactFeedback({
+            type: null,
+            message: "",
+        });
         setSubmitFeedback({
             type: null,
             message: "",
@@ -243,8 +259,30 @@ export default function HomePage() {
     const handleSubmitResult = async () => {
         if (submitLockRef.current || isSubmitting || hasSubmitted) return;
 
+        const name = contactForm.contact_name.trim();
+        const phone = contactForm.contact_phone.trim();
+        if (!name) {
+            setContactFeedback({
+                type: "error",
+                message: "\u8bf7\u586b\u5199\u79f0\u547c\u3002",
+            });
+            return;
+        }
+
+        if (!phone) {
+            setContactFeedback({
+                type: "error",
+                message: "\u8bf7\u586b\u5199\u8054\u7cfb\u7535\u8bdd\u3002",
+            });
+            return;
+        }
+
         submitLockRef.current = true;
         setIsSubmitting(true);
+        setContactFeedback({
+            type: null,
+            message: "",
+        });
         setSubmitFeedback({
             type: null,
             message: "",
@@ -266,6 +304,8 @@ export default function HomePage() {
                 cross_border_gate_answer: payload.crossBorderGateAnswer,
                 weaknesses: payload.weaknesses,
                 answers: payload.answers,
+                contact_name: name,
+                contact_phone: phone,
                 submission_source: "web",
                 follow_up_status: "new",
             });
@@ -288,6 +328,13 @@ export default function HomePage() {
             setIsSubmitting(false);
             submitLockRef.current = false;
         }
+    };
+
+    const handleContactFieldChange = (field, value) => {
+        setContactForm((prev) => ({
+            ...prev,
+            [field]: value,
+        }));
     };
 
     const progress =
@@ -324,6 +371,9 @@ export default function HomePage() {
                 isSubmitting={isSubmitting}
                 hasSubmitted={hasSubmitted}
                 submitFeedback={submitFeedback}
+                contactForm={contactForm}
+                contactFeedback={contactFeedback}
+                onContactFieldChange={handleContactFieldChange}
             />
 
             
