@@ -70,6 +70,10 @@ export default function HomePage() {
     const [answers, setAnswers] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hasSubmitted, setHasSubmitted] = useState(false);
+    const [submitFeedback, setSubmitFeedback] = useState({
+        type: null,
+        message: "",
+    });
     const [sessionQuestionIds, setSessionQuestionIds] = useState(SYSTEM_QUESTION_IDS);
 
     const submitLockRef = useRef(false);
@@ -225,6 +229,10 @@ export default function HomePage() {
         setAnswers({});
         setSessionQuestionIds(SYSTEM_QUESTION_IDS);
         setHasSubmitted(false);
+        setSubmitFeedback({
+            type: null,
+            message: "",
+        });
         submitLockRef.current = false;
         if (autoNextTimerRef.current) {
             clearTimeout(autoNextTimerRef.current);
@@ -237,6 +245,10 @@ export default function HomePage() {
 
         submitLockRef.current = true;
         setIsSubmitting(true);
+        setSubmitFeedback({
+            type: null,
+            message: "",
+        });
 
         try {
             const payload = buildSubmissionPayload({
@@ -259,13 +271,19 @@ export default function HomePage() {
             });
 
             if (error) {
-                console.error("提交失败：", error);
-                alert("提交失败，请检查 Supabase 配置或表权限。");
+                console.error("Submit failed:", error);
+                setSubmitFeedback({
+                    type: "error",
+                    message: "\u63d0\u4ea4\u5931\u8d25\uff0c\u8bf7\u68c0\u67e5\u7f51\u7edc\u6216\u7a0d\u540e\u91cd\u8bd5\u3002",
+                });
                 return;
             }
 
             setHasSubmitted(true);
-            alert("您的测评结果已提交成功。");
+            setSubmitFeedback({
+                type: "success",
+                message: "\u6d4b\u8bc4\u7ed3\u679c\u5df2\u6210\u529f\u63d0\u4ea4\u3002",
+            });
         } finally {
             setIsSubmitting(false);
             submitLockRef.current = false;
@@ -305,6 +323,7 @@ export default function HomePage() {
                 onSubmitResult={handleSubmitResult}
                 isSubmitting={isSubmitting}
                 hasSubmitted={hasSubmitted}
+                submitFeedback={submitFeedback}
             />
 
             

@@ -355,6 +355,27 @@ p {
   color: #1c1917;
 }
 
+.submit-feedback {
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.result-submit-tip {
+  margin-top: 12px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #57534e;
+}
+
+.submit-feedback-success {
+  color: #166534;
+}
+
+.submit-feedback-error {
+  color: #b91c1c;
+}
+
 @media (max-width: 900px) {
   .page-shell {
     padding: 16px;

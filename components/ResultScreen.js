@@ -6,44 +6,45 @@ export default function ResultScreen({
     onSubmitResult,
     isSubmitting,
     hasSubmitted,
+    submitFeedback,
 }) {
     return (
         <main className="page-shell">
             <section className="result-layout">
                 <div className={`result-hero theme-${resultData.levelKey}`}>
-                    <div className="result-label">您的离婚准备评估结果</div>
+                    <div className="result-label">{"\u60a8\u7684\u79bb\u5a5a\u51c6\u5907\u8bc4\u4f30\u7ed3\u679c"}</div>
                     <h1>{resultData.level.label}</h1>
                     <p>{resultData.level.subtitle}</p>
 
                     <div className="result-metrics">
                         <div className="metric-card">
-                            <span>总分</span>
+                            <span>{"\u603b\u5206"}</span>
                             <strong>{resultData.totalScore}</strong>
                         </div>
                         <div className="metric-card">
-                            <span>动态满分</span>
+                            <span>{"\u52a8\u6001\u6ee1\u5206"}</span>
                             <strong>{resultData.dynamicFullScore}</strong>
                         </div>
                         <div className="metric-card">
-                            <span>得分率</span>
+                            <span>{"\u5f97\u5206\u7387"}</span>
                             <strong>{formatRate(resultData.scoreRate)}</strong>
                         </div>
                     </div>
                 </div>
 
                 <div className="result-side-card">
-                    <h2>这意味着什么</h2>
+                    <h2>{"\u8fd9\u610f\u5473\u7740\u4ec0\u4e48"}</h2>
                     <p>{resultData.level.summary}</p>
                 </div>
 
                 <div className="result-main-card">
-                    <h2>您当前最需要优先处理的环节</h2>
+                    <h2>{"\u60a8\u5f53\u524d\u6700\u9700\u8981\u4f18\u5148\u5904\u7406\u7684\u73af\u8282"}</h2>
                     <div className="weakness-list">
                         {resultData.weaknesses.map((item) => (
                             <div key={item.code} className="weakness-item">
                                 <div className="weakness-head">
                                     <strong>{item.name}</strong>
-                                    <span>均分 {item.avg.toFixed(1)}</span>
+                                    <span>{"\u5747\u5206 "}{item.avg.toFixed(1)}</span>
                                 </div>
                                 <p>{item.hint}</p>
                                 <p className="emphasis">{item.action}</p>
@@ -53,21 +54,39 @@ export default function ResultScreen({
                 </div>
 
                 <div className="result-side-card">
-                    <h2>下一步更适合怎么做</h2>
+                    <h2>{"\u4e0b\u4e00\u6b65\u66f4\u9002\u5408\u600e\u4e48\u505a"}</h2>
                     <p>{resultData.level.action}</p>
+                    <p className="result-submit-tip">
+                        {"\u63d0\u4ea4\u540e\u53ef\u4fdd\u5b58\u672c\u6b21\u6d4b\u8bc4\u7ed3\u679c\uff0c\u4fbf\u4e8e\u540e\u7eed\u67e5\u770b\u4e0e\u54a8\u8be2\u6c9f\u901a\u3002"}
+                    </p>
                     <div className="intro-actions">
-                        <button className="primary-btn" onClick={onRestart}>
-                            重新测评
-                        </button>
-
                         <button
-                            className="secondary-btn"
+                            className="primary-btn"
                             onClick={onSubmitResult}
                             disabled={isSubmitting || hasSubmitted}
                         >
-                            {hasSubmitted ? "已提交" : isSubmitting ? "提交中..." : "提交测评结果"}
+                            {hasSubmitted
+                                ? "\u5df2\u63d0\u4ea4"
+                                : isSubmitting
+                                ? "\u63d0\u4ea4\u4e2d..."
+                                : "\u63d0\u4ea4\u5e76\u4fdd\u5b58\u7ed3\u679c"}
+                        </button>
+
+                        <button className="secondary-btn" onClick={onRestart}>
+                            {"\u91cd\u65b0\u6d4b\u8bc4"}
                         </button>
                     </div>
+                    {submitFeedback?.type && (
+                        <p
+                            className={`submit-feedback ${
+                                submitFeedback.type === "success"
+                                    ? "submit-feedback-success"
+                                    : "submit-feedback-error"
+                            }`}
+                        >
+                            {submitFeedback.message}
+                        </p>
+                    )}
                 </div>
             </section>
         </main>
