@@ -142,6 +142,11 @@ export default function HomePage() {
         const validDimensions = Object.values(dimensions).filter(
             (item) => !item.skipped && item.avg !== null
         );
+        const radarDimensions = validDimensions.map((item) => ({
+            code: item.code,
+            name: item.name,
+            avg: item.avg,
+        }));
 
         let weaknesses = validDimensions
             .filter((item) => item.avg < 3)
@@ -165,6 +170,7 @@ export default function HomePage() {
             scoreRate,
             levelKey,
             level: RESULT_COPY[levelKey],
+            radarDimensions,
             weaknesses,
         };
     }, [answers]);

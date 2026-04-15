@@ -1,4 +1,5 @@
 import { formatRate } from "../lib/scoring.js";
+import DimensionRadarChart from "./DimensionRadarChart.js";
 
 export default function ResultScreen({
     resultData,
@@ -41,6 +42,11 @@ export default function ResultScreen({
                 </div>
 
                 <div className="result-main-card">
+                    <div className="radar-section">
+                        <h2>{"\u7ef4\u5ea6\u96f7\u8fbe\u56fe"}</h2>
+                        <DimensionRadarChart dimensions={resultData.radarDimensions} />
+                    </div>
+
                     <h2>{"\u60a8\u5f53\u524d\u6700\u9700\u8981\u4f18\u5148\u5904\u7406\u7684\u73af\u8282"}</h2>
                     <div className="weakness-list">
                         {resultData.weaknesses.map((item) => (

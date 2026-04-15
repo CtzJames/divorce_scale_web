@@ -315,6 +315,110 @@ p {
   grid-column: 2 / 3;
 }
 
+.radar-section {
+  margin-bottom: 24px;
+}
+
+.radar-section h2 {
+  margin-bottom: 14px;
+}
+
+.radar-chart-wrap {
+  border: 1px solid #e7e5e4;
+  border-radius: 22px;
+  background: #fafaf9;
+  padding: 16px;
+}
+
+.radar-canvas {
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto;
+}
+
+.radar-canvas svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+
+.radar-grid {
+  fill: none;
+  stroke: #d6d3d1;
+  stroke-width: 1;
+}
+
+.radar-axis {
+  stroke: #d6d3d1;
+  stroke-width: 1;
+}
+
+.radar-area {
+  fill: rgba(68, 64, 60, 0.24);
+  stroke: #292524;
+  stroke-width: 2;
+}
+
+.radar-point {
+  fill: #1c1917;
+}
+
+.radar-label {
+  fill: #44403c;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.radar-legend {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.radar-legend-item {
+  border: 1px solid #e7e5e4;
+  border-radius: 12px;
+  padding: 8px 10px;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  gap: 8px;
+  align-items: center;
+  background: #fff;
+}
+
+.radar-legend-short {
+  min-width: 60px;
+  text-align: center;
+  border-radius: 999px;
+  border: 1px solid #d6d3d1;
+  background: #f5f5f4;
+  color: #44403c;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 4px 8px;
+}
+
+.radar-legend-name {
+  font-size: 13px;
+  color: #44403c;
+  line-height: 1.4;
+}
+
+.radar-legend-score {
+  font-size: 13px;
+  color: #78716c;
+  white-space: nowrap;
+}
+
+.radar-empty {
+  margin: 0;
+  font-size: 14px;
+  color: #78716c;
+}
+
 .weakness-list {
   margin-top: 20px;
   display: flex;
@@ -442,5 +546,24 @@ p {
 
   .result-metrics {
     grid-template-columns: 1fr;
+  }
+
+  .radar-canvas {
+    max-width: 320px;
+  }
+
+  .radar-label {
+    font-size: 11px;
+  }
+
+  .radar-legend-item {
+    grid-template-columns: 1fr;
+    gap: 6px;
+    align-items: flex-start;
+  }
+
+  .radar-legend-short {
+    min-width: 0;
+    width: fit-content;
   }
 }
