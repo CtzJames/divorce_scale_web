@@ -77,6 +77,7 @@ export default function HomePage() {
     const [contactForm, setContactForm] = useState({
         contact_name: "",
         contact_phone: "",
+        contact_wechat: "",
     });
     const [contactFeedback, setContactFeedback] = useState({
         type: null,
@@ -246,6 +247,7 @@ export default function HomePage() {
         setContactForm({
             contact_name: "",
             contact_phone: "",
+            contact_wechat: "",
         });
         setContactFeedback({
             type: null,
@@ -267,6 +269,7 @@ export default function HomePage() {
 
         const name = contactForm.contact_name.trim();
         const phone = contactForm.contact_phone.trim();
+        const wechat = contactForm.contact_wechat.trim();
         if (!name) {
             setContactFeedback({
                 type: "error",
@@ -312,6 +315,7 @@ export default function HomePage() {
                 answers: payload.answers,
                 contact_name: name,
                 contact_phone: phone,
+                contact_wechat: wechat,
                 submission_source: "web",
                 follow_up_status: "new",
             });

@@ -92,6 +92,17 @@ export default function ResultScreen({
                                     disabled={isSubmitting || hasSubmitted}
                                 />
                             </label>
+                            <label className="contact-form-field">
+                                <span>{"\u5fae\u4fe1\uff08\u9009\u586b\uff09"}</span>
+                                <input
+                                    type="text"
+                                    value={contactForm.contact_wechat}
+                                    onChange={(e) =>
+                                        onContactFieldChange("contact_wechat", e.target.value)
+                                    }
+                                    disabled={isSubmitting || hasSubmitted}
+                                />
+                            </label>
                         </div>
                         {contactFeedback?.type && (
                             <p className="submit-feedback submit-feedback-error">
