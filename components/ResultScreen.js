@@ -12,6 +12,17 @@ export default function ResultScreen({
     contactFeedback,
     onContactFieldChange,
 }) {
+    const successFeedbackByLevel = {
+        high: "已收到您的信息，测评结果已保存。后续可结合本次评估，进一步沟通正式推进前更值得优先确认的关键安排。",
+        mid: "已收到您的信息，测评结果已保存。后续可结合本次评估，进一步沟通当前更值得优先补强的环节与推进顺序。",
+        low: "已收到您的信息，测评结果已保存。后续可结合本次评估，进一步沟通当前需要优先梳理的风险点与准备方向。",
+    };
+
+    const resolvedSubmitFeedbackMessage =
+        submitFeedback?.type === "success"
+            ? successFeedbackByLevel[resultData.levelKey] ?? submitFeedback.message
+            : submitFeedback?.message;
+
     return (
         <main className="page-shell">
             <section className="result-layout">
@@ -63,10 +74,10 @@ export default function ResultScreen({
                 </div>
 
                 <div className="result-side-card">
-                    <h2>{"\u4e0b\u4e00\u6b65\u66f4\u9002\u5408\u600e\u4e48\u505a"}</h2>
+                    <h2>{"\u4e0b\u4e00\u6b65\u5efa\u8bae\u4e0e\u6c9f\u901a\u5b89\u6392"}</h2>
                     <p>{resultData.level.action}</p>
                     <p className="result-submit-tip">
-                        {"\u63d0\u4ea4\u540e\u53ef\u4fdd\u5b58\u672c\u6b21\u6d4b\u8bc4\u7ed3\u679c\uff0c\u4fbf\u4e8e\u540e\u7eed\u67e5\u770b\u4e0e\u54a8\u8be2\u6c9f\u901a\u3002"}
+                        {"\u8fd9\u4efd\u6d4b\u8bc4\u53ef\u4ee5\u5e2e\u52a9\u60a8\u521d\u6b65\u8bc6\u522b\u5f53\u524d\u95ee\u9898\u3002\u82e5\u5e0c\u671b\u7ed3\u5408\u7ed3\u679c\u7ee7\u7eed\u6c9f\u901a\uff0c\u7559\u4e0b\u8054\u7cfb\u65b9\u5f0f\u540e\uff0c\u4fbf\u4e8e\u540e\u7eed\u8fdb\u4e00\u6b65\u4ea4\u6d41\u3002"}
                     </p>
                     <div className="contact-form-wrap">
                         <div className="contact-form-grid">
@@ -120,7 +131,7 @@ export default function ResultScreen({
                                 ? "\u5df2\u63d0\u4ea4"
                                 : isSubmitting
                                 ? "\u63d0\u4ea4\u4e2d..."
-                                : "\u63d0\u4ea4\u5e76\u4fdd\u5b58\u7ed3\u679c"}
+                                : "\u4fdd\u5b58\u7ed3\u679c\u5e76\u63d0\u4ea4\u4fe1\u606f"}
                         </button>
 
                         <button className="secondary-btn" onClick={onRestart}>
@@ -135,7 +146,7 @@ export default function ResultScreen({
                                     : "submit-feedback-error"
                             }`}
                         >
-                            {submitFeedback.message}
+                            {resolvedSubmitFeedbackMessage}
                         </p>
                     )}
                 </div>
