@@ -514,6 +514,128 @@ p {
   color: #b91c1c;
 }
 
+.result-export-actions {
+  margin-top: 12px;
+}
+
+.export-hidden-wrap {
+  position: absolute;
+  left: -99999px;
+  top: 0;
+  pointer-events: none;
+}
+
+.export-capture-target {
+  width: 960px;
+}
+
+.export-card {
+  background: #fff;
+  border: 1px solid #e7e5e4;
+  border-radius: 24px;
+  padding: 28px;
+  color: #1c1917;
+}
+
+.export-head {
+  border-radius: 18px;
+  border: 1px solid rgba(28, 25, 23, 0.1);
+  background: rgba(255, 255, 255, 0.65);
+  padding: 18px;
+}
+
+.export-title {
+  margin: 0;
+  font-size: 14px;
+  letter-spacing: 0.08em;
+  color: #57534e;
+}
+
+.export-head h3 {
+  margin: 10px 0 0;
+  font-size: 42px;
+  line-height: 1.2;
+}
+
+.export-bridge {
+  margin-top: 8px;
+  color: #44403c;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.export-metrics {
+  margin-top: 16px;
+  display: grid;
+  gap: 10px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.export-metric-item {
+  border: 1px solid #e7e5e4;
+  border-radius: 16px;
+  padding: 12px;
+  background: #fff;
+}
+
+.export-metric-item span {
+  display: block;
+  color: #57534e;
+  font-size: 13px;
+}
+
+.export-metric-item strong {
+  display: block;
+  margin-top: 8px;
+  font-size: 26px;
+  color: #1c1917;
+}
+
+.export-radar-block,
+.export-weakness-block {
+  margin-top: 16px;
+  border: 1px solid #e7e5e4;
+  border-radius: 18px;
+  padding: 16px;
+  background: #fff;
+}
+
+.export-radar-block h4,
+.export-weakness-block h4 {
+  margin: 0 0 12px;
+  font-size: 18px;
+}
+
+.export-weakness-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 10px;
+}
+
+.export-weakness-item {
+  border: 1px solid #e7e5e4;
+  border-radius: 12px;
+  background: #fafaf9;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.export-weakness-item span {
+  color: #44403c;
+  font-size: 15px;
+}
+
+.export-weakness-item strong {
+  color: #1c1917;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
 @media (max-width: 900px) {
   .page-shell {
     padding: 16px;

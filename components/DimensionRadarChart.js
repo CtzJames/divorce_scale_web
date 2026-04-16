@@ -6,13 +6,13 @@ const LABEL_RADIUS = 140;
 const GRID_LEVELS = [0.2, 0.4, 0.6, 0.8, 1];
 
 const SHORT_LABEL_MAP = {
-    D1: "心理执行",
-    D2: "经济独立",
-    D3: "子女安排",
-    D4: "经济控制",
-    D5: "法律应对",
-    D6: "离婚动因",
-    D7: "跨境事项",
+    D1: "心理",
+    D2: "经济",
+    D3: "亲权",
+    D4: "财权",
+    D5: "知法",
+    D6: "情感",
+    D7: "域外",
 };
 
 function getPointByRatio(angle, ratio) {
@@ -65,6 +65,9 @@ export default function DimensionRadarChart({ dimensions = [] }) {
                             key={level}
                             className="radar-grid"
                             points={getPolygonPoints(angles, level)}
+                            fill="none"
+                            stroke="#d6d3d1"
+                            strokeWidth="1"
                         />
                     ))}
 
@@ -78,11 +81,20 @@ export default function DimensionRadarChart({ dimensions = [] }) {
                                 y1={CENTER}
                                 x2={end.x}
                                 y2={end.y}
+                                stroke="#d6d3d1"
+                                strokeWidth="1"
                             />
                         );
                     })}
 
-                    <polygon className="radar-area" points={areaPoints} />
+                    <polygon
+                        className="radar-area"
+                        points={areaPoints}
+                        fill="#44403c"
+                        fillOpacity="0.24"
+                        stroke="#292524"
+                        strokeWidth="2"
+                    />
 
                     {dataPoints.map((point) => (
                         <circle
@@ -91,6 +103,7 @@ export default function DimensionRadarChart({ dimensions = [] }) {
                             cx={point.x}
                             cy={point.y}
                             r="4"
+                            fill="#1c1917"
                         />
                     ))}
 

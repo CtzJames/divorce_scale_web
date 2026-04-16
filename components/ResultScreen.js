@@ -1,5 +1,8 @@
+import { useRef, useState } from "react";
+import { toPng } from "html-to-image";
 import { formatRate } from "../lib/scoring.js";
 import DimensionRadarChart from "./DimensionRadarChart.js";
+import SimpleResultExportCard from "./SimpleResultExportCard.js";
 
 export default function ResultScreen({
     resultData,
@@ -12,6 +15,13 @@ export default function ResultScreen({
     contactFeedback,
     onContactFieldChange,
 }) {
+    const exportCardRef = useRef(null);
+    const [isExporting, setIsExporting] = useState(false);
+    const [exportFeedback, setExportFeedback] = useState({
+        type: null,
+        message: "",
+    });
+
     const successFeedbackByLevel = {
         high: "已收到您的信息，测评结果已保存。后续可结合本次评估，进一步沟通正式推进前更值得优先确认的关键安排。",
         mid: "已收到您的信息，测评结果已保存。后续可结合本次评估，进一步沟通当前更值得优先补强的环节与推进顺序。",
@@ -23,48 +33,85 @@ export default function ResultScreen({
             ? successFeedbackByLevel[resultData.levelKey] ?? submitFeedback.message
             : submitFeedback?.message;
 
+    const handleExportSimpleResultImage = async () => {
+        if (!exportCardRef.current || isExporting) return;
+
+        setIsExporting(true);
+        setExportFeedback({
+            type: null,
+            message: "",
+        });
+
+        try {
+            const dataUrl = await toPng(exportCardRef.current, {
+                cacheBust: true,
+                pixelRatio: 2,
+                backgroundColor: "#ffffff",
+            });
+
+            const fileName = `result-simple-${resultData.levelKey}-${Date.now()}.png`;
+            const link = document.createElement("a");
+            link.download = fileName;
+            link.href = dataUrl;
+            link.click();
+
+            setExportFeedback({
+                type: "success",
+                message: "已生成简洁版结果图。",
+            });
+        } catch (error) {
+            console.error("Export image failed:", error);
+            setExportFeedback({
+                type: "error",
+                message: "导出失败，请稍后重试。",
+            });
+        } finally {
+            setIsExporting(false);
+        }
+    };
+
     return (
         <main className="page-shell">
             <section className="result-layout">
                 <div className={`result-hero theme-${resultData.levelKey}`}>
-                    <div className="result-label">{"\u60a8\u7684\u79bb\u5a5a\u51c6\u5907\u8bc4\u4f30\u7ed3\u679c"}</div>
+                    <div className="result-label">{"您的离婚准备评估结果"}</div>
                     <h1>{resultData.level.label}</h1>
                     <p>{resultData.level.subtitle}</p>
 
                     <div className="result-metrics">
                         <div className="metric-card">
-                            <span>{"\u603b\u5206"}</span>
+                            <span>{"总分"}</span>
                             <strong>{resultData.totalScore}</strong>
                         </div>
                         <div className="metric-card">
-                            <span>{"\u52a8\u6001\u6ee1\u5206"}</span>
+                            <span>{"动态满分"}</span>
                             <strong>{resultData.dynamicFullScore}</strong>
                         </div>
                         <div className="metric-card">
-                            <span>{"\u5f97\u5206\u7387"}</span>
+                            <span>{"得分率"}</span>
                             <strong>{formatRate(resultData.scoreRate)}</strong>
                         </div>
                     </div>
                 </div>
 
                 <div className="result-side-card">
-                    <h2>{"\u8fd9\u610f\u5473\u7740\u4ec0\u4e48"}</h2>
+                    <h2>{"这意味着什么"}</h2>
                     <p>{resultData.level.summary}</p>
                 </div>
 
                 <div className="result-main-card">
                     <div className="radar-section">
-                        <h2>{"\u7ef4\u5ea6\u96f7\u8fbe\u56fe"}</h2>
+                        <h2>{"维度雷达图"}</h2>
                         <DimensionRadarChart dimensions={resultData.radarDimensions} />
                     </div>
 
-                    <h2>{"\u60a8\u5f53\u524d\u6700\u9700\u8981\u4f18\u5148\u5904\u7406\u7684\u73af\u8282"}</h2>
+                    <h2>{"您当前最需要优先处理的环节"}</h2>
                     <div className="weakness-list">
                         {resultData.weaknesses.map((item) => (
                             <div key={item.code} className="weakness-item">
                                 <div className="weakness-head">
                                     <strong>{item.name}</strong>
-                                    <span>{"\u5747\u5206 "}{item.avg.toFixed(1)}</span>
+                                    <span>{"均分 "}{item.avg.toFixed(1)}</span>
                                 </div>
                                 <p>{item.hint}</p>
                                 <p className="emphasis">{item.action}</p>
@@ -74,15 +121,37 @@ export default function ResultScreen({
                 </div>
 
                 <div className="result-side-card">
-                    <h2>{"\u4e0b\u4e00\u6b65\u5efa\u8bae\u4e0e\u6c9f\u901a\u5b89\u6392"}</h2>
+                    <h2>{"下一步建议与沟通安排"}</h2>
                     <p>{resultData.level.action}</p>
+
+                    <div className="result-export-actions">
+                        <button
+                            className="secondary-btn"
+                            onClick={handleExportSimpleResultImage}
+                            disabled={isExporting}
+                        >
+                            {isExporting ? "导出中..." : "导出结果"}
+                        </button>
+                        {exportFeedback.type && (
+                            <p
+                                className={`submit-feedback ${
+                                    exportFeedback.type === "success"
+                                        ? "submit-feedback-success"
+                                        : "submit-feedback-error"
+                                }`}
+                            >
+                                {exportFeedback.message}
+                            </p>
+                        )}
+                    </div>
+
                     <p className="result-submit-tip">
-                        {"\u8fd9\u4efd\u6d4b\u8bc4\u53ef\u4ee5\u5e2e\u52a9\u60a8\u521d\u6b65\u8bc6\u522b\u5f53\u524d\u95ee\u9898\u3002\u82e5\u5e0c\u671b\u7ed3\u5408\u7ed3\u679c\u7ee7\u7eed\u6c9f\u901a\uff0c\u7559\u4e0b\u8054\u7cfb\u65b9\u5f0f\u540e\uff0c\u4fbf\u4e8e\u540e\u7eed\u8fdb\u4e00\u6b65\u4ea4\u6d41\u3002"}
+                        {"这份测评可以帮助您初步识别当前问题。若希望结合结果继续沟通，留下联系方式后，便于后续进一步交流。"}
                     </p>
                     <div className="contact-form-wrap">
                         <div className="contact-form-grid">
                             <label className="contact-form-field">
-                                <span>{"\u79f0\u547c\uff08\u5fc5\u586b\uff09"}</span>
+                                <span>{"称呼（必填）"}</span>
                                 <input
                                     type="text"
                                     value={contactForm.contact_name}
@@ -93,7 +162,7 @@ export default function ResultScreen({
                                 />
                             </label>
                             <label className="contact-form-field">
-                                <span>{"\u8054\u7cfb\u7535\u8bdd\uff08\u5fc5\u586b\uff09"}</span>
+                                <span>{"联系电话（必填）"}</span>
                                 <input
                                     type="tel"
                                     value={contactForm.contact_phone}
@@ -104,7 +173,7 @@ export default function ResultScreen({
                                 />
                             </label>
                             <label className="contact-form-field">
-                                <span>{"\u5fae\u4fe1\uff08\u9009\u586b\uff09"}</span>
+                                <span>{"微信（选填）"}</span>
                                 <input
                                     type="text"
                                     value={contactForm.contact_wechat}
@@ -128,14 +197,14 @@ export default function ResultScreen({
                             disabled={isSubmitting || hasSubmitted}
                         >
                             {hasSubmitted
-                                ? "\u5df2\u63d0\u4ea4"
+                                ? "已提交"
                                 : isSubmitting
-                                ? "\u63d0\u4ea4\u4e2d..."
-                                : "\u4fdd\u5b58\u7ed3\u679c\u5e76\u63d0\u4ea4\u4fe1\u606f"}
+                                ? "提交中..."
+                                : "保存结果并提交信息"}
                         </button>
 
                         <button className="secondary-btn" onClick={onRestart}>
-                            {"\u91cd\u65b0\u6d4b\u8bc4"}
+                            {"重新测评"}
                         </button>
                     </div>
                     {submitFeedback?.type && (
@@ -149,6 +218,12 @@ export default function ResultScreen({
                             {resolvedSubmitFeedbackMessage}
                         </p>
                     )}
+                </div>
+
+                <div className="export-hidden-wrap" aria-hidden="true">
+                    <div ref={exportCardRef} className="export-capture-target">
+                        <SimpleResultExportCard resultData={resultData} />
+                    </div>
                 </div>
             </section>
         </main>
