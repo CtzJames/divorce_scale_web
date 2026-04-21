@@ -21,6 +21,12 @@ export const SERVICE_TYPE_OPTIONS = [
   { value: "other", label: "其他" },
 ];
 
+export const REPORT_VISIBILITY_OPTIONS = [
+  { value: "hidden", label: "隐藏" },
+  { value: "internal_only", label: "仅内部可见" },
+  { value: "user_visible", label: "已开放给用户" },
+];
+
 export const RESULT_LEVEL_FILTER_OPTIONS = [
   { value: "all", label: "全部结果等级" },
   { value: "high", label: "准备充分" },
@@ -51,6 +57,14 @@ const serviceTypeLabelMap = SERVICE_TYPE_OPTIONS.reduce((acc, item) => {
   return acc;
 }, {});
 
+const reportVisibilityLabelMap = REPORT_VISIBILITY_OPTIONS.reduce(
+  (acc, item) => {
+    acc[item.value] = item.label;
+    return acc;
+  },
+  {}
+);
+
 const resultLevelLabelMap = RESULT_LEVEL_FILTER_OPTIONS.reduce((acc, item) => {
   if (item.value !== "all") acc[item.value] = item.label;
   return acc;
@@ -64,6 +78,11 @@ export function getFollowUpStatusLabel(value) {
 export function getServiceTypeLabel(value) {
   if (!value) return "-";
   return serviceTypeLabelMap[value] ?? value;
+}
+
+export function getReportVisibilityLabel(value) {
+  if (!value) return "仅内部可见";
+  return reportVisibilityLabelMap[value] ?? value;
 }
 
 export function normalizeResultLevel(value) {

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   getFollowUpStatusLabel,
   getResultLevelLabel,
@@ -54,9 +55,9 @@ export default function LeadsTable({ rows }) {
               <td>{item.assigned_to || "-"}</td>
               <td>{formatDateTime(item.updated_at || item.created_at)}</td>
               <td>
-                <button type="button" className="btn btn-ghost" disabled>
-                  查看详情（下一轮）
-                </button>
+                <Link className="btn btn-ghost" href={`/leads/${item.id}`}>
+                  查看详情
+                </Link>
               </td>
             </tr>
           ))}

@@ -148,6 +148,9 @@ export default function HomePage() {
             name: item.name,
             avg: item.avg,
         }));
+        const dimensionScores = Object.fromEntries(
+            radarDimensions.map((item) => [item.code, Number(item.avg.toFixed(2))])
+        );
 
         let weaknesses = validDimensions
             .filter((item) => item.avg < 3)
@@ -172,6 +175,7 @@ export default function HomePage() {
             levelKey,
             level: RESULT_COPY[levelKey],
             radarDimensions,
+            dimensionScores,
             weaknesses,
         };
     }, [answers]);
@@ -312,6 +316,7 @@ export default function HomePage() {
                 child_gate_answer: payload.childGateAnswer,
                 cross_border_gate_answer: payload.crossBorderGateAnswer,
                 weaknesses: payload.weaknesses,
+                dimension_scores: payload.dimensionScores,
                 answers: payload.answers,
                 contact_name: name,
                 contact_phone: phone,
