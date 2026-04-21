@@ -35,6 +35,24 @@ export default function LeadsFilters({ filters }) {
         </label>
 
         <label className="field">
+          <span>提交开始时间</span>
+          <input
+            name="createdFrom"
+            type="datetime-local"
+            defaultValue={filters.createdFrom}
+          />
+        </label>
+
+        <label className="field">
+          <span>提交结束时间</span>
+          <input
+            name="createdTo"
+            type="datetime-local"
+            defaultValue={filters.createdTo}
+          />
+        </label>
+
+        <label className="field">
           <span>跟进状态</span>
           <select name="followUpStatus" defaultValue={filters.followUpStatus}>
             {buildOptions(FOLLOW_UP_STATUS_OPTIONS)}

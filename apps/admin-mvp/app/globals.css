@@ -71,6 +71,19 @@ a {
   flex-wrap: wrap;
 }
 
+.list-head,
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.pagination {
+  margin-top: 14px;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(6, minmax(120px, 1fr));
@@ -132,6 +145,11 @@ textarea {
 }
 
 .btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+
+.disabled-btn {
   cursor: not-allowed;
   opacity: 0.55;
 }
