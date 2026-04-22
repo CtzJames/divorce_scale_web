@@ -273,10 +273,19 @@ th {
   font-size: 18px;
 }
 
+.section-head h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
 .section-head p {
   margin: 6px 0 0;
   color: var(--muted);
   font-size: 13px;
+}
+
+.section-head.compact p {
+  margin-top: 4px;
 }
 
 .info-grid {
@@ -316,6 +325,20 @@ th {
 
 .detail-edit-grid {
   grid-template-columns: repeat(4, minmax(160px, 1fr));
+}
+
+.sub-panel {
+  border-top: 1px solid var(--line);
+  padding-top: 14px;
+}
+
+.contact-supplement {
+  display: grid;
+  gap: 12px;
+}
+
+.full-span {
+  grid-column: 1 / -1;
 }
 
 .subhead {

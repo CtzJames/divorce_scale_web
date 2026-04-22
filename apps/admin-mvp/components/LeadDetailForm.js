@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import {
+  ASSET_TIER_LEVEL_OPTIONS,
   FOLLOW_UP_STATUS_OPTIONS,
   REPORT_VISIBILITY_OPTIONS,
   SERVICE_TYPE_OPTIONS,
@@ -43,6 +44,22 @@ function getInitialServiceTypes(value) {
   return ["none"];
 }
 
+const CONTACT_SUPPLEMENT_STATUS = new Set([
+  "contacted",
+  "consulting",
+  "converted",
+]);
+
+function hasContactSupplementValue(value) {
+  return (
+    value.client_age !== "" ||
+    Boolean(value.client_gender) ||
+    Boolean(value.client_location) ||
+    Boolean(value.asset_tier_level) ||
+    Boolean(value.marital_dispute_summary)
+  );
+}
+
 function makeBaseline(row, serviceTypes) {
   return {
     follow_up_status: row.follow_up_status || "new",
@@ -50,6 +67,11 @@ function makeBaseline(row, serviceTypes) {
     assigned_to: row.assigned_to || "",
     appointment_owner: row.appointment_owner || "",
     appointment_time: formatDateTimeInputValue(row.appointment_time),
+    client_age: row.client_age ?? "",
+    client_gender: row.client_gender || "",
+    client_location: row.client_location || "",
+    asset_tier_level: row.asset_tier_level || "",
+    marital_dispute_summary: row.marital_dispute_summary || "",
     admin_note: row.admin_note || "",
     report_visibility: row.report_visibility || "internal_only",
     report_version: row.report_version || "",
@@ -94,6 +116,9 @@ export default function LeadDetailForm({ row, action }) {
     service_type: normalizeServiceTypes(serviceTypes),
   };
   const isDirty = JSON.stringify(currentState) !== JSON.stringify(baseline);
+  const shouldShowContactSupplement =
+    hasContactSupplementValue(formState) ||
+    CONTACT_SUPPLEMENT_STATUS.has(formState.follow_up_status);
 
   function updateField(name, value) {
     setFormState((current) => ({ ...current, [name]: value }));
@@ -197,6 +222,92 @@ export default function LeadDetailForm({ row, action }) {
           <ReadonlyBox label="最近修改人" value={row.updated_by || "-"} />
           <ReadonlyBox label="最近更新时间" value={formatDateTime(row.updated_at)} />
         </div>
+
+        {shouldShowContactSupplement ? (
+          <div className="sub-panel contact-supplement">
+            <div className="section-head compact">
+              <h3>建联补充信息</h3>
+              <p>仅记录建联后的最小画像信息与核心争议摘要。</p>
+            </div>
+            <div className="grid detail-edit-grid">
+              <label className="field">
+                <span>客户年龄</span>
+                <input
+                  type="number"
+                  min="0"
+                  step="1"
+                  name="client_age"
+                  value={formState.client_age}
+                  onChange={(event) =>
+                    updateField("client_age", event.target.value)
+                  }
+                  placeholder="非负整数"
+                />
+              </label>
+
+              <label className="field">
+                <span>客户性别</span>
+                <select
+                  name="client_gender"
+                  value={formState.client_gender}
+                  onChange={(event) =>
+                    updateField("client_gender", event.target.value)
+                  }
+                >
+                  <option value="">未填写</option>
+                  <option value="male">男</option>
+                  <option value="female">女</option>
+                </select>
+              </label>
+
+              <label className="field">
+                <span>主要所在地</span>
+                <input
+                  name="client_location"
+                  value={formState.client_location}
+                  onChange={(event) =>
+                    updateField("client_location", event.target.value)
+                  }
+                  placeholder="城市 / 地区"
+                />
+              </label>
+
+              <label className="field">
+                <span>资产阶层等级</span>
+                <select
+                  name="asset_tier_level"
+                  value={formState.asset_tier_level}
+                  onChange={(event) =>
+                    updateField("asset_tier_level", event.target.value)
+                  }
+                >
+                  <option value="">未填写</option>
+                  {ASSET_TIER_LEVEL_OPTIONS.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+
+              <label className="field full-span">
+                <span>核心婚姻争议摘要</span>
+                <textarea
+                  name="marital_dispute_summary"
+                  value={formState.marital_dispute_summary}
+                  onChange={(event) =>
+                    updateField(
+                      "marital_dispute_summary",
+                      event.target.value
+                    )
+                  }
+                  rows={4}
+                  placeholder="只记录当前案件核心争议本身，不替代内部备注。"
+                />
+              </label>
+            </div>
+          </div>
+        ) : null}
       </Section>
 
       <Section title="内部备注" description="第一版先用单字段承载当前判断与下一步安排。">

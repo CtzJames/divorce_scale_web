@@ -27,6 +27,22 @@ export const REPORT_VISIBILITY_OPTIONS = [
   { value: "user_visible", label: "已开放给用户" },
 ];
 
+export const ASSET_TIER_LEVEL_OPTIONS = [
+  { value: "A5", label: "A5" },
+  { value: "A5.5", label: "A5.5" },
+  { value: "A6", label: "A6" },
+  { value: "A6.5", label: "A6.5" },
+  { value: "A7", label: "A7" },
+  { value: "A7.5", label: "A7.5" },
+  { value: "A8", label: "A8" },
+  { value: "A8.5", label: "A8.5" },
+  { value: "A9", label: "A9" },
+  { value: "A9.5", label: "A9.5" },
+  { value: "A10", label: "A10" },
+  { value: "A10.5", label: "A10.5" },
+  { value: "A11", label: "A11" },
+];
+
 export const RESULT_LEVEL_FILTER_OPTIONS = [
   { value: "all", label: "全部结果等级" },
   { value: "high", label: "准备充分" },

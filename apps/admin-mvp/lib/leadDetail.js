@@ -1,4 +1,5 @@
 import {
+  ASSET_TIER_LEVEL_OPTIONS,
   FOLLOW_UP_STATUS_OPTIONS,
   REPORT_VISIBILITY_OPTIONS,
   SERVICE_TYPE_OPTIONS,
@@ -28,6 +29,11 @@ const LEAD_DETAIL_COLUMNS = [
   "assigned_to",
   "appointment_owner",
   "appointment_time",
+  "client_age",
+  "client_gender",
+  "client_location",
+  "asset_tier_level",
+  "marital_dispute_summary",
   "last_follow_up_at",
   "updated_by",
   "updated_at",
@@ -50,6 +56,12 @@ const VALID_SERVICE_TYPES = new Set(
 
 const VALID_REPORT_VISIBILITY = new Set(
   REPORT_VISIBILITY_OPTIONS.map((item) => item.value)
+);
+
+const VALID_CLIENT_GENDER = new Set(["male", "female"]);
+
+const VALID_ASSET_TIER_LEVEL = new Set(
+  ASSET_TIER_LEVEL_OPTIONS.map((item) => item.value)
 );
 
 function cleanText(value) {
@@ -77,6 +89,27 @@ function normalizeTimestamp(value) {
   const date = new Date(text);
   if (Number.isNaN(date.getTime())) return null;
   return date.toISOString();
+}
+
+function normalizeNonNegativeInteger(value) {
+  const text = cleanText(value);
+  if (!text || !/^\d+$/.test(text)) return null;
+
+  const number = Number(text);
+  if (!Number.isSafeInteger(number) || number < 0) return null;
+  return number;
+}
+
+function normalizeClientGender(value) {
+  const text = cleanText(value);
+  if (!text) return null;
+  return VALID_CLIENT_GENDER.has(text) ? text : null;
+}
+
+function normalizeAssetTierLevel(value) {
+  const text = cleanText(value);
+  if (!text) return null;
+  return VALID_ASSET_TIER_LEVEL.has(text) ? text : null;
 }
 
 export async function getLeadDetail(id) {
@@ -107,6 +140,15 @@ export async function updateLeadDetail(id, formData, operatorName) {
     assigned_to: cleanText(formData.get("assigned_to")),
     appointment_owner: cleanText(formData.get("appointment_owner")),
     appointment_time: normalizeTimestamp(formData.get("appointment_time")),
+    client_age: normalizeNonNegativeInteger(formData.get("client_age")),
+    client_gender: normalizeClientGender(formData.get("client_gender")),
+    client_location: cleanText(formData.get("client_location")),
+    asset_tier_level: normalizeAssetTierLevel(
+      formData.get("asset_tier_level")
+    ),
+    marital_dispute_summary: cleanText(
+      formData.get("marital_dispute_summary")
+    ),
     admin_note: cleanText(formData.get("admin_note")),
     report_visibility: VALID_REPORT_VISIBILITY.has(reportVisibility)
       ? reportVisibility
