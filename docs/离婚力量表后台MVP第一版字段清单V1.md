@@ -379,6 +379,74 @@
 - 后台可编辑：否
 - 备注：建议补入，列表页“最近更新时间”依赖此字段
 
+### 6.10 建联补充信息字段（本轮新增）
+
+以下字段用于管理员与客户建联后补充录入最小画像信息与争议摘要信息，仍然归属 `assessment_results` 主表，不拆新表，不参与前台测评逻辑，不进入列表页默认列与当前 CSV 导出。
+
+Supabase 手动补字段建议：
+
+```sql
+alter table assessment_results
+  add column if not exists client_age integer,
+  add column if not exists client_gender text,
+  add column if not exists client_location text,
+  add column if not exists asset_tier_level text,
+  add column if not exists marital_dispute_summary text;
+```
+
+#### 6.10.1 `client_age`
+
+- 字段含义：客户当前年龄
+- 建议类型：`integer`
+- 来源：后台人工填写
+- 是否必填：否
+- 前台写入：否
+- 后台可编辑：是
+- 保存口径：空值、非数字、负数、非整数均按 `null` 处理；只接受非负整数
+
+#### 6.10.2 `client_gender`
+
+- 字段含义：客户性别
+- 建议类型：`text`
+- 来源：后台人工选择
+- 是否必填：否
+- 前台写入：否
+- 后台可编辑：是
+- 建议稳定值：
+  - `male`：男
+  - `female`：女
+
+#### 6.10.3 `client_location`
+
+- 字段含义：客户当前主要所在地
+- 建议类型：`text`
+- 来源：后台人工填写
+- 是否必填：否
+- 前台写入：否
+- 后台可编辑：是
+- 备注：文本输入，不做结构化地区拆分
+
+#### 6.10.4 `asset_tier_level`
+
+- 字段含义：客户资产阶层等级
+- 建议类型：`text`
+- 来源：后台人工选择
+- 是否必填：否
+- 前台写入：否
+- 后台可编辑：是
+- 候选值：`A5`、`A5.5`、`A6`、`A6.5`、`A7`、`A7.5`、`A8`、`A8.5`、`A9`、`A9.5`、`A10`、`A10.5`、`A11`
+- 备注：按律所内部既定“资产阶层分级表”人工选择；本阶段不在系统内实现计算逻辑，不根据测评结果自动推断
+
+#### 6.10.5 `marital_dispute_summary`
+
+- 字段含义：当前核心婚姻争议摘要
+- 建议类型：`text`
+- 来源：后台人工填写
+- 是否必填：否
+- 前台写入：否
+- 后台可编辑：是
+- 备注：只记录当前案件核心争议本身，不替代 `admin_note`；`admin_note` 继续负责跟进过程、当前判断与下一步安排
+
 ---
 
 ## 7. 报告与扩展预留字段
@@ -485,6 +553,11 @@
 - `assigned_to`
 - `appointment_owner`
 - `appointment_time`
+- `client_age`
+- `client_gender`
+- `client_location`
+- `asset_tier_level`
+- `marital_dispute_summary`
 - `last_follow_up_at`
 - `updated_by`
 - `updated_at`
@@ -551,6 +624,11 @@
 - `assigned_to`
 - `appointment_owner`
 - `appointment_time`
+- `client_age`
+- `client_gender`
+- `client_location`
+- `asset_tier_level`
+- `marital_dispute_summary`
 - `last_follow_up_at`
 - `updated_by`
 - `report_version`
@@ -595,6 +673,11 @@
 - `assigned_to`
 - `appointment_owner`
 - `appointment_time`
+- `client_age`
+- `client_gender`
+- `client_location`
+- `asset_tier_level`
+- `marital_dispute_summary`
 - `report_visibility`
 - `report_version`
 
@@ -616,4 +699,3 @@
 - Supabase 真实表结构核对清单；
 - Codex 最小改动方案输入依据；
 - 后台页面取字段说明文档。
-
