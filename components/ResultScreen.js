@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { toPng } from "html-to-image";
 import { formatRate } from "../lib/scoring.js";
+import { WECOM_ASSISTANT_QR_PATH } from "../data/resultPageConfig.js";
 import DimensionRadarChart from "./DimensionRadarChart.js";
 import SimpleResultExportCard from "./SimpleResultExportCard.js";
 
@@ -94,35 +95,11 @@ export default function ResultScreen({
                     </div>
                 </div>
 
-                <div className="result-side-card">
-                    <h2>{"这意味着什么"}</h2>
-                    <p>{resultData.level.summary}</p>
-                </div>
-
                 <div className="result-main-card">
                     <div className="radar-section">
                         <h2>{"维度雷达图"}</h2>
                         <DimensionRadarChart dimensions={resultData.radarDimensions} />
                     </div>
-
-                    <h2>{"您当前最需要优先处理的环节"}</h2>
-                    <div className="weakness-list">
-                        {resultData.weaknesses.map((item) => (
-                            <div key={item.code} className="weakness-item">
-                                <div className="weakness-head">
-                                    <strong>{item.name}</strong>
-                                    <span>{"均分 "}{item.avg.toFixed(1)}</span>
-                                </div>
-                                <p>{item.hint}</p>
-                                <p className="emphasis">{item.action}</p>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                <div className="result-side-card">
-                    <h2>{"下一步建议与沟通安排"}</h2>
-                    <p>{resultData.level.action}</p>
 
                     <div className="result-export-actions">
                         <button
@@ -130,7 +107,7 @@ export default function ResultScreen({
                             onClick={handleExportSimpleResultImage}
                             disabled={isExporting}
                         >
-                            {isExporting ? "导出中..." : "导出结果"}
+                            {isExporting ? "导出中..." : "导出简要结果"}
                         </button>
                         {exportFeedback.type && (
                             <p
@@ -144,9 +121,18 @@ export default function ResultScreen({
                             </p>
                         )}
                     </div>
+                </div>
+
+                <div className="result-side-card">
+                    <h2>{"下一步建议与沟通安排"}</h2>
+                    <div className="locked-advice-card">
+                        <p className="locked-advice-text">
+                            {resultData.personalizedAdviceText}
+                        </p>
+                    </div>
 
                     <p className="result-submit-tip">
-                        {"这份测评可以帮助您初步识别当前问题。若希望结合结果继续沟通，留下联系方式后，便于后续进一步交流。"}
+                        {"如需获取完整版测评结果报告与解析，请点击按钮保存您的结果并添加小助理微信"}
                     </p>
                     <div className="contact-form-wrap">
                         <div className="contact-form-grid">
@@ -217,6 +203,15 @@ export default function ResultScreen({
                         >
                             {resolvedSubmitFeedbackMessage}
                         </p>
+                    )}
+                    {hasSubmitted && (
+                        <div className="wecom-qr-panel">
+                            <h3>{"添加小助理微信"}</h3>
+                            <img
+                                src={WECOM_ASSISTANT_QR_PATH}
+                                alt="律所工作人员企业微信二维码"
+                            />
+                        </div>
                     )}
                 </div>
 

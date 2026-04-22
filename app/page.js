@@ -2,7 +2,11 @@
 
 import { useMemo, useRef, useState } from "react";
 import { DIMENSION_META, QUESTIONS, QUESTION_MAP } from "../data/questions.js";
-import { RESULT_COPY } from "../data/resultCopy.js";
+import {
+    DIMENSION_ADVICE_COPY,
+    DIMENSION_ORDER,
+    RESULT_COPY,
+} from "../data/resultCopy.js";
 import { getLevelKey, getScore } from "../lib/scoring.js";
 import { buildSubmissionPayload } from "../lib/buildSubmissionPayload.js";
 import { supabase } from "../lib/supabaseClient.js";
@@ -62,6 +66,42 @@ function buildSessionQuestionIds(answers) {
     }).map((q) => q.id);
 
     return [...SYSTEM_QUESTION_IDS, ...shuffleQuestionIds(regularQuestionIds)];
+}
+
+function getAdviceBand(avg) {
+    if (avg < 3) return "low";
+    if (avg < 4) return "mid";
+    return "high";
+}
+
+function buildPersonalizedAdviceText(validDimensions) {
+    const dimensionByCode = Object.fromEntries(
+        validDimensions.map((item) => [item.code, item])
+    );
+
+    const groupedAdvice = {
+        low: [],
+        mid: [],
+        high: [],
+    };
+
+    DIMENSION_ORDER.forEach((code) => {
+        const dimension = dimensionByCode[code];
+        if (!dimension || !Number.isFinite(dimension.avg)) return;
+
+        const band = getAdviceBand(dimension.avg);
+        const advice = DIMENSION_ADVICE_COPY[code]?.[band];
+        if (advice) groupedAdvice[band].push(advice);
+    });
+
+    const activeGroups = ["low", "mid", "high"]
+        .map((band) => groupedAdvice[band])
+        .filter((items) => items.length > 0);
+    const prefixes = ["建议您", "此外，建议您", "最后，建议您"];
+
+    return activeGroups
+        .map((items, index) => `${prefixes[index]}${items.join("；")}。`)
+        .join("");
 }
 
 export default function HomePage() {
@@ -139,6 +179,7 @@ export default function HomePage() {
         const scoreRate =
             dynamicFullScore > 0 ? (totalScore / dynamicFullScore) * 100 : 0;
         const levelKey = getLevelKey(scoreRate);
+        const isCrossBorderMarriage = answers.SYS_CROSS_BORDER_GATE === "yes";
 
         const validDimensions = Object.values(dimensions).filter(
             (item) => !item.skipped && item.avg !== null
@@ -168,15 +209,26 @@ export default function HomePage() {
             action: DIMENSION_META[item.code].action,
         }));
 
+        const baseLevelCopy = RESULT_COPY[levelKey];
+        const level = {
+            ...baseLevelCopy,
+            subtitle:
+                baseLevelCopy.description[
+                    isCrossBorderMarriage ? "crossBorder" : "standard"
+                ],
+        };
+
         return {
             totalScore,
             dynamicFullScore,
             scoreRate,
             levelKey,
-            level: RESULT_COPY[levelKey],
+            level,
+            isCrossBorderMarriage,
             radarDimensions,
             dimensionScores,
             weaknesses,
+            personalizedAdviceText: buildPersonalizedAdviceText(validDimensions),
         };
     }, [answers]);
 
