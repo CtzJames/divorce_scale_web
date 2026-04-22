@@ -8,6 +8,9 @@ const projectBasePath = shouldUseProjectBasePath ? `/${repoName}` : "";
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "export",
+  env: {
+    NEXT_PUBLIC_BASE_PATH: projectBasePath,
+  },
   images: {
     unoptimized: true,
   },
