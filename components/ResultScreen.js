@@ -22,17 +22,16 @@ export default function ResultScreen({
         type: null,
         message: "",
     });
+    const [isContactFormOpen, setIsContactFormOpen] = useState(false);
 
-    const successFeedbackByLevel = {
-        high: "已收到您的信息，测评结果已保存。后续可结合本次评估，进一步沟通正式推进前更值得优先确认的关键安排。",
-        mid: "已收到您的信息，测评结果已保存。后续可结合本次评估，进一步沟通当前更值得优先补强的环节与推进顺序。",
-        low: "已收到您的信息，测评结果已保存。后续可结合本次评估，进一步沟通当前需要优先梳理的风险点与准备方向。",
+    const handlePrimaryAction = () => {
+        if (!isContactFormOpen && !hasSubmitted) {
+            setIsContactFormOpen(true);
+            return;
+        }
+
+        onSubmitResult();
     };
-
-    const resolvedSubmitFeedbackMessage =
-        submitFeedback?.type === "success"
-            ? successFeedbackByLevel[resultData.levelKey] ?? submitFeedback.message
-            : submitFeedback?.message;
 
     const handleExportSimpleResultImage = async () => {
         if (!exportCardRef.current || isExporting) return;
@@ -107,7 +106,7 @@ export default function ResultScreen({
                             onClick={handleExportSimpleResultImage}
                             disabled={isExporting}
                         >
-                            {isExporting ? "导出中..." : "导出简要结果"}
+                            {isExporting ? "导出中..." : "下载简要测评报告"}
                         </button>
                         {exportFeedback.type && (
                             <p
@@ -124,69 +123,86 @@ export default function ResultScreen({
                 </div>
 
                 <div className="result-side-card">
-                    <h2>{"下一步建议与沟通安排"}</h2>
+                    <h2>{"提升离婚力"}</h2>
                     <div className="locked-advice-card">
                         <p className="locked-advice-text">
                             {resultData.personalizedAdviceText}
                         </p>
                     </div>
 
-                    <p className="result-submit-tip">
-                        {"如需获取完整版测评结果报告与解析，请点击按钮保存您的结果并添加小助理微信"}
-                    </p>
-                    <div className="contact-form-wrap">
-                        <div className="contact-form-grid">
-                            <label className="contact-form-field">
-                                <span>{"称呼（必填）"}</span>
-                                <input
-                                    type="text"
-                                    value={contactForm.contact_name}
-                                    onChange={(e) =>
-                                        onContactFieldChange("contact_name", e.target.value)
-                                    }
-                                    disabled={isSubmitting || hasSubmitted}
-                                />
-                            </label>
-                            <label className="contact-form-field">
-                                <span>{"联系电话（必填）"}</span>
-                                <input
-                                    type="tel"
-                                    value={contactForm.contact_phone}
-                                    onChange={(e) =>
-                                        onContactFieldChange("contact_phone", e.target.value)
-                                    }
-                                    disabled={isSubmitting || hasSubmitted}
-                                />
-                            </label>
-                            <label className="contact-form-field">
-                                <span>{"微信（选填）"}</span>
-                                <input
-                                    type="text"
-                                    value={contactForm.contact_wechat}
-                                    onChange={(e) =>
-                                        onContactFieldChange("contact_wechat", e.target.value)
-                                    }
-                                    disabled={isSubmitting || hasSubmitted}
-                                />
-                            </label>
-                        </div>
-                        {contactFeedback?.type && (
-                            <p className="submit-feedback submit-feedback-error">
-                                {contactFeedback.message}
+                    {(isContactFormOpen || hasSubmitted) && (
+                        <>
+                            <p className="result-submit-tip">
+                                {
+                                    "请填写您的信息以保存您的测评结果。后续可添加小助理微信，免费获取深度测评报告，解锁更多建议与行动指南。"
+                                }
                             </p>
-                        )}
-                    </div>
+                            <div className="contact-form-wrap">
+                                <div className="contact-form-grid">
+                                    <label className="contact-form-field">
+                                        <span>{"称呼（必填）"}</span>
+                                        <input
+                                            type="text"
+                                            value={contactForm.contact_name}
+                                            onChange={(e) =>
+                                                onContactFieldChange(
+                                                    "contact_name",
+                                                    e.target.value
+                                                )
+                                            }
+                                            disabled={isSubmitting || hasSubmitted}
+                                        />
+                                    </label>
+                                    <label className="contact-form-field">
+                                        <span>{"联系电话（必填）"}</span>
+                                        <input
+                                            type="tel"
+                                            value={contactForm.contact_phone}
+                                            onChange={(e) =>
+                                                onContactFieldChange(
+                                                    "contact_phone",
+                                                    e.target.value
+                                                )
+                                            }
+                                            disabled={isSubmitting || hasSubmitted}
+                                        />
+                                    </label>
+                                    <label className="contact-form-field">
+                                        <span>{"微信（选填）"}</span>
+                                        <input
+                                            type="text"
+                                            value={contactForm.contact_wechat}
+                                            onChange={(e) =>
+                                                onContactFieldChange(
+                                                    "contact_wechat",
+                                                    e.target.value
+                                                )
+                                            }
+                                            disabled={isSubmitting || hasSubmitted}
+                                        />
+                                    </label>
+                                </div>
+                                {contactFeedback?.type && (
+                                    <p className="submit-feedback submit-feedback-error">
+                                        {contactFeedback.message}
+                                    </p>
+                                )}
+                            </div>
+                        </>
+                    )}
                     <div className="intro-actions">
                         <button
                             className="primary-btn"
-                            onClick={onSubmitResult}
+                            onClick={handlePrimaryAction}
                             disabled={isSubmitting || hasSubmitted}
                         >
                             {hasSubmitted
                                 ? "已提交"
                                 : isSubmitting
                                 ? "提交中..."
-                                : "保存结果并提交信息"}
+                                : isContactFormOpen
+                                ? "保存结果并提交信息"
+                                : "获取深度测评报告"}
                         </button>
 
                         <button className="secondary-btn" onClick={onRestart}>
@@ -201,7 +217,9 @@ export default function ResultScreen({
                                     : "submit-feedback-error"
                             }`}
                         >
-                            {resolvedSubmitFeedbackMessage}
+                            {submitFeedback.type === "success"
+                                ? "您的测评结果已成功提交，请添加小助理微信获取深度测评报告。"
+                                : submitFeedback.message}
                         </p>
                     )}
                     {hasSubmitted && (
