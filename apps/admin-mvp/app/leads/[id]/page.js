@@ -234,7 +234,7 @@ export default async function LeadDetailPage({ params, searchParams }) {
                 线索详情：{row.contact_name || "未填写姓名"}
               </h1>
               <p className="subtitle">
-                单条记录查看、核心跟进字段编辑与详细报告预留区。
+                单条记录查看、核心跟进字段编辑与用户测评详细解读报告区入口。
               </p>
             </div>
             <div className="toolbar">

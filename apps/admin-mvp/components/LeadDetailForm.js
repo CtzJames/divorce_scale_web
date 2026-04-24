@@ -4,11 +4,10 @@ import { useMemo, useState } from "react";
 import {
   ASSET_TIER_LEVEL_OPTIONS,
   FOLLOW_UP_STATUS_OPTIONS,
-  REPORT_VISIBILITY_OPTIONS,
   SERVICE_TYPE_OPTIONS,
-  getReportVisibilityLabel,
 } from "../lib/constants";
 import { formatDateTime, formatDateTimeInputValue } from "../lib/format";
+import { getIncludedDimensionCodes } from "../lib/reportContent";
 
 function buildOptions(options) {
   return options
@@ -73,7 +72,6 @@ function makeBaseline(row, serviceTypes) {
     asset_tier_level: row.asset_tier_level || "",
     marital_dispute_summary: row.marital_dispute_summary || "",
     admin_note: row.admin_note || "",
-    report_visibility: row.report_visibility || "internal_only",
     report_version: row.report_version || "",
   };
 }
@@ -119,6 +117,11 @@ export default function LeadDetailForm({ row, action }) {
   const shouldShowContactSupplement =
     hasContactSupplementValue(formState) ||
     CONTACT_SUPPLEMENT_STATUS.has(formState.follow_up_status);
+  const reportStatus = row.report_generated_at ? "可预览" : "未生成";
+  const includedDimensionCodes = getIncludedDimensionCodes({
+    childGateAnswer: row.child_gate_answer,
+    crossBorderGateAnswer: row.cross_border_gate_answer,
+  });
 
   function updateField(name, value) {
     setFormState((current) => ({ ...current, [name]: value }));
@@ -323,21 +326,11 @@ export default function LeadDetailForm({ row, action }) {
         </label>
       </Section>
 
-      <Section title="报告预留区" description="本轮只做预留，不生成报告正文。">
+      <Section
+        title="用户测评详细解读报告区"
+        description="本区仅展示状态与主入口，不在详情页内直接展开长报告正文。"
+      >
         <div className="grid detail-edit-grid">
-          <label className="field">
-            <span>报告可见性</span>
-            <select
-              name="report_visibility"
-              value={formState.report_visibility}
-              onChange={(event) =>
-                updateField("report_visibility", event.target.value)
-              }
-            >
-              {buildOptions(REPORT_VISIBILITY_OPTIONS)}
-            </select>
-          </label>
-
           <label className="field">
             <span>报告版本</span>
             <input
@@ -350,18 +343,28 @@ export default function LeadDetailForm({ row, action }) {
             />
           </label>
 
-          <ReadonlyBox
-            label="当前可见性"
-            value={getReportVisibilityLabel(row.report_visibility)}
-          />
+          <ReadonlyBox label="报告状态" value={reportStatus} />
           <ReadonlyBox
             label="报告生成时间"
             value={formatDateTime(row.report_generated_at)}
           />
+          <ReadonlyBox
+            label="纳入报告维度"
+            value={includedDimensionCodes.join("、") || "-"}
+          />
+        </div>
+
+        <div className="report-entry-actions">
+          <div className="muted reserve-note">
+            当前首版采用独立子页面预览，进入报告页时会轻量写回报告生成时间与默认版本，不联动其他跟进字段。
+          </div>
+          <a className="btn btn-primary" href={`/leads/${row.id}/report`}>
+            查看用户测评详细解读报告
+          </a>
         </div>
 
         <p className="muted reserve-note">
-          详细报告正文、生成、导出与用户端开放逻辑留给后续线程处理。
+          当前展示口径仅保留“未生成 / 可预览”。图片导出在报告页中完成，PDF 导出与 report_content 持久化后置。
         </p>
       </Section>
 

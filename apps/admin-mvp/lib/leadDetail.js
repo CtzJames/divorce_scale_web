@@ -1,7 +1,6 @@
 import {
   ASSET_TIER_LEVEL_OPTIONS,
   FOLLOW_UP_STATUS_OPTIONS,
-  REPORT_VISIBILITY_OPTIONS,
   SERVICE_TYPE_OPTIONS,
 } from "./constants";
 import { getSupabaseServerClient } from "./supabaseServer";
@@ -52,10 +51,6 @@ const VALID_SERVICE_TYPES = new Set(
   SERVICE_TYPE_OPTIONS.filter((item) => item.value !== "all").map(
     (item) => item.value
   )
-);
-
-const VALID_REPORT_VISIBILITY = new Set(
-  REPORT_VISIBILITY_OPTIONS.map((item) => item.value)
 );
 
 const VALID_CLIENT_GENDER = new Set(["male", "female"]);
@@ -128,8 +123,6 @@ export async function getLeadDetail(id) {
 
 export async function updateLeadDetail(id, formData, operatorName) {
   const followUpStatus = cleanText(formData.get("follow_up_status")) ?? "new";
-  const reportVisibility =
-    cleanText(formData.get("report_visibility")) ?? "internal_only";
   const now = new Date().toISOString();
 
   const payload = {
@@ -150,9 +143,6 @@ export async function updateLeadDetail(id, formData, operatorName) {
       formData.get("marital_dispute_summary")
     ),
     admin_note: cleanText(formData.get("admin_note")),
-    report_visibility: VALID_REPORT_VISIBILITY.has(reportVisibility)
-      ? reportVisibility
-      : "internal_only",
     report_version: cleanText(formData.get("report_version")),
     last_follow_up_at: now,
     updated_at: now,
@@ -166,4 +156,32 @@ export async function updateLeadDetail(id, formData, operatorName) {
     .eq("id", id);
 
   return { error };
+}
+
+export async function markLeadReportPreviewGenerated(id) {
+  const now = new Date().toISOString();
+  const supabase = getSupabaseServerClient();
+
+  const { data: currentRow, error: fetchError } = await supabase
+    .from("assessment_results")
+    .select("id,report_version")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (fetchError || !currentRow) {
+    return { row: null, error: fetchError ?? new Error("Lead not found") };
+  }
+
+  const nextReportVersion = cleanText(currentRow.report_version) ?? "v1";
+  const { data, error } = await supabase
+    .from("assessment_results")
+    .update({
+      report_generated_at: now,
+      report_version: nextReportVersion,
+    })
+    .eq("id", id)
+    .select(LEAD_DETAIL_COLUMNS)
+    .maybeSingle();
+
+  return { row: data, error };
 }
