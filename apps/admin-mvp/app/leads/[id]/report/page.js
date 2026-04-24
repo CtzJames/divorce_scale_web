@@ -23,6 +23,8 @@ import {
   REPORT_DIMENSION_COPY,
 } from "../../../../lib/reportContent";
 
+export const dynamic = "force-dynamic";
+
 function buildReportDimensions(row) {
   const dbScores =
     row.dimension_scores &&

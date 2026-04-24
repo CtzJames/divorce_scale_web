@@ -11,6 +11,8 @@ import {
   queryLeads,
 } from "../../lib/leadsQuery";
 
+export const dynamic = "force-dynamic";
+
 export default async function LeadsPage({ searchParams }) {
   const cookieStore = await cookies();
   const sessionValue = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;

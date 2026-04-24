@@ -26,6 +26,8 @@ import {
 } from "../../../lib/assessmentDisplay";
 import LeadDetailForm from "../../../components/LeadDetailForm";
 
+export const dynamic = "force-dynamic";
+
 const DIMENSION_LABELS = {
   D1: "D1 心理准备",
   D2: "D2 经济准备",
