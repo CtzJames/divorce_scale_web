@@ -8,6 +8,11 @@ const nextConfig = {
   turbopack: {
     root: currentDir,
   },
+  experimental: {
+    serverActions: {
+      allowedOrigins: ["divorce-scale-admin-mvp.edgeone.dev"],
+    },
+  },
 };
 
 export default nextConfig;
