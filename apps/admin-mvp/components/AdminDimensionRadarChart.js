@@ -2,7 +2,7 @@ const MAX_SCORE = 5;
 const CHART_SIZE = 360;
 const CENTER = CHART_SIZE / 2;
 const MAX_RADIUS = 112;
-const LABEL_RADIUS = 140;
+const LABEL_RADIUS = 145;
 const GRID_LEVELS = [0.2, 0.4, 0.6, 0.8, 1];
 
 function getPointByRatio(angle, ratio) {
@@ -44,19 +44,29 @@ export default function AdminDimensionRadarChart({ dimensions = [] }) {
     return getPointByRatio(angles[index], normalized);
   });
 
-  const areaPoints = dataPoints.map((point) => `${point.x},${point.y}`).join(" ");
+  const dataAreaPoints = dataPoints.map((point) => `${point.x},${point.y}`).join(" ");
+  const baselinePoints = angles
+    .map((angle) => getPointByRatio(angle, 0.72))
+    .map((point) => `${point.x},${point.y}`)
+    .join(" ");
 
   return (
     <div className="radar-chart-wrap">
       <div className="radar-canvas" role="img" aria-label="用户测评详细解读报告维度雷达图">
         <svg viewBox={`0 0 ${CHART_SIZE} ${CHART_SIZE}`}>
+          <defs>
+            <linearGradient id="reportRadarFill" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stopColor="#2A4FD7" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="#0E3D74" stopOpacity="0.12" />
+            </linearGradient>
+          </defs>
+
           {GRID_LEVELS.map((level) => (
             <polygon
               key={level}
-              className="radar-grid"
               points={getPolygonPoints(angles, level)}
               fill="none"
-              stroke="#d5dbe7"
+              stroke={level === 1 ? "#C6D3E5" : "#DEE7F1"}
               strokeWidth="1"
             />
           ))}
@@ -66,34 +76,40 @@ export default function AdminDimensionRadarChart({ dimensions = [] }) {
             return (
               <line
                 key={angle}
-                className="radar-axis"
                 x1={CENTER}
                 y1={CENTER}
                 x2={end.x}
                 y2={end.y}
-                stroke="#d5dbe7"
+                stroke="#DEE7F1"
                 strokeWidth="1"
               />
             );
           })}
 
           <polygon
-            className="radar-area"
-            points={areaPoints}
-            fill="#0f4c81"
-            fillOpacity="0.22"
-            stroke="#0f4c81"
-            strokeWidth="2"
+            points={baselinePoints}
+            fill="none"
+            stroke="#7A8FAE"
+            strokeWidth="1.5"
+            strokeDasharray="5 4"
+          />
+
+          <polygon
+            points={dataAreaPoints}
+            fill="url(#reportRadarFill)"
+            stroke="#214CA1"
+            strokeWidth="2.4"
           />
 
           {dataPoints.map((point) => (
             <circle
               key={`${point.x}-${point.y}`}
-              className="radar-point"
               cx={point.x}
               cy={point.y}
-              r="4"
-              fill="#0b3c67"
+              r="4.5"
+              fill="#214CA1"
+              stroke="#FFFFFF"
+              strokeWidth="1.5"
             />
           ))}
 
@@ -115,15 +131,16 @@ export default function AdminDimensionRadarChart({ dimensions = [] }) {
         </svg>
       </div>
 
-      <ul className="radar-legend">
-        {safeDimensions.map((item) => (
-          <li key={item.code} className="radar-legend-item">
-            <span className="radar-legend-short">{item.shortName || item.code}</span>
-            <span className="radar-legend-name">{item.name}</span>
-            <span className="radar-legend-score">均分 {item.avg.toFixed(1)}</span>
-          </li>
-        ))}
-      </ul>
+      <div className="radar-legend-inline">
+        <span>
+          <i className="radar-legend-line solid" />
+          您的得分
+        </span>
+        <span>
+          <i className="radar-legend-line dashed" />
+          该维度平均水平
+        </span>
+      </div>
     </div>
   );
 }
