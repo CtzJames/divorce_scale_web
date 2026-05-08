@@ -3,9 +3,11 @@
 import { useRef, useState } from "react";
 import {
   BrainCircuit,
+  ChevronDown,
   Crown,
   ClipboardCheck,
   Coins,
+  Download,
   FileCheck2,
   Globe2,
   HeartCrack,
@@ -355,31 +357,286 @@ function DimensionIdentity({ dimension }) {
   );
 }
 
+function MobileLeadReportView({
+  report,
+  reportRef,
+  priorityDimensions,
+  overallVisual,
+  scoreRateValue,
+}) {
+  return (
+    <article ref={reportRef} className="mobile-report-sheet">
+      <header className="mobile-report-hero">
+        <img
+          src={HERO_WATERMARK_SRC}
+          alt=""
+          aria-hidden="true"
+          className="mobile-report-hero-watermark"
+        />
+
+        <div className="mobile-report-hero-brand">
+          <LogoLockup compact src={REPORT_HEADER_LOGO_SRC} />
+          <div className="mobile-report-hero-tags">
+            <span>内部资料</span>
+            <span>仅限内部使用</span>
+          </div>
+        </div>
+
+        <div className="mobile-report-hero-main">
+          <h1>测评结果详细解读报告</h1>
+          <p className="mobile-report-subtitle">离婚准备度综合评估</p>
+          <p className="mobile-report-generated">
+            报告生成时间：{report.reportGeneratedAtText || "-"}
+          </p>
+          <p className="mobile-report-intro">
+            本报告基于对您在心理、经济、亲权、财权、知法、情感与域外七个维度的评估，
+            结合当前阶段个体情况，形成离婚准备度综合评估结果与针对性建议，
+            为您制定下一步行动计划、优化决策与风险防控提供参考。
+          </p>
+        </div>
+      </header>
+
+      <section className="mobile-report-result-panel">
+        <div className="mobile-report-title-row">
+          <StatIcon kind="result" />
+          <span>您的综合评估结果</span>
+        </div>
+        <strong className="mobile-report-result-label">{report.totalResult.label}</strong>
+        <div className="mobile-report-rate-lockup">
+          <strong style={{ color: overallVisual.main }}>{report.scoreRateText}</strong>
+          <span>综合得分率</span>
+        </div>
+        <div
+          className="mobile-report-progress"
+          style={{ backgroundColor: overallVisual.track }}
+          aria-hidden="true"
+        >
+          <span
+            style={{
+              width: `${scoreRateValue}%`,
+              background: `linear-gradient(90deg, ${overallVisual.deep} 0%, ${overallVisual.main} 100%)`,
+            }}
+          />
+        </div>
+        <p className="mobile-report-status" style={{ color: overallVisual.text }}>
+          {getScoreRateStatus(report.scoreRateText)}
+        </p>
+        <p className="mobile-report-result-summary">
+          {getExecutiveSummary(report.resultLevel)}
+        </p>
+      </section>
+
+      <section className="mobile-report-card">
+        <div className="mobile-report-section-title">
+          <i />
+          <h2>关键指标</h2>
+        </div>
+        <div className="mobile-report-metrics-grid">
+          <div className="mobile-report-metric-card">
+            <StatIcon kind="score" />
+            <span>总分</span>
+            <strong>{report.totalScore}</strong>
+          </div>
+          <div className="mobile-report-metric-card">
+            <StatIcon kind="total" />
+            <span>动态满分</span>
+            <strong>{report.dynamicFullScore}</strong>
+          </div>
+          <div className="mobile-report-metric-card">
+            <StatIcon kind="dimension" />
+            <span>纳入维度</span>
+            <strong>{report.dimensions.length} 项</strong>
+          </div>
+          <div className="mobile-report-metric-card">
+            <StatIcon kind="priority" />
+            <span>优先补强维度</span>
+            <strong>{priorityDimensions || "-"}</strong>
+          </div>
+        </div>
+      </section>
+
+      <section className="mobile-report-card mobile-report-overall-card">
+        <div className="mobile-report-title-row">
+          <StatIcon kind="tip" />
+          <h2>总体评价</h2>
+        </div>
+        <p>{report.totalResult.summary}</p>
+      </section>
+
+      <section className="mobile-report-card mobile-report-structure-card">
+        <div className="mobile-report-section-title">
+          <i />
+          <h2>维度结构概览</h2>
+        </div>
+        <div className="mobile-report-radar-panel">
+          <AdminDimensionRadarChart dimensions={report.dimensions} />
+        </div>
+        <div className="mobile-report-dimension-score-list">
+          {report.dimensions.map((dimension) => {
+            const scoreMeta = getDimensionScoreVisual(dimension.avg);
+
+            return (
+              <div key={dimension.code} className="mobile-report-dimension-score-row">
+                <div className="mobile-report-dimension-score-name">
+                  <DimensionIcon code={dimension.code} />
+                  <h3>{dimension.name}</h3>
+                </div>
+                <div className="mobile-report-dimension-score-meta">
+                  <span>
+                    平均分{" "}
+                    <strong style={{ color: scoreMeta.main }}>
+                      {formatScore(dimension.avg)}
+                    </strong>{" "}
+                    / 5
+                  </span>
+                  <span
+                    className="mobile-report-score-tag"
+                    style={{
+                      color: scoreMeta.text,
+                      backgroundColor: scoreMeta.soft,
+                      borderColor: scoreMeta.border,
+                    }}
+                  >
+                    {scoreMeta.label}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="mobile-report-detail-section">
+        <div className="mobile-report-section-title">
+          <i />
+          <h2>七维度详细解读</h2>
+        </div>
+        <div className="mobile-report-dimension-detail-list">
+          {report.dimensions.map((dimension) => {
+            const meta = DIMENSION_META[dimension.code] || DIMENSION_META.D1;
+            const scoreMeta = getDimensionScoreVisual(dimension.avg);
+
+            return (
+              <section
+                key={dimension.code}
+                className="mobile-report-dimension-detail-card"
+              >
+                <div className="mobile-report-dimension-detail-head">
+                  <div className="mobile-report-dimension-detail-title">
+                    <span
+                      className="mobile-report-dimension-code"
+                      style={{
+                        color: meta.accent,
+                        backgroundColor: meta.tint,
+                        borderColor: `${meta.accent}33`,
+                      }}
+                    >
+                      {dimension.code}
+                    </span>
+                    <DimensionIcon code={dimension.code} />
+                    <h3>{dimension.name}</h3>
+                  </div>
+                  <div className="mobile-report-dimension-detail-score">
+                    <strong style={{ color: scoreMeta.main }}>
+                      {formatScore(dimension.avg)}
+                    </strong>
+                    <span>/ 5</span>
+                    <span
+                      className="mobile-report-score-tag"
+                      style={{
+                        color: scoreMeta.text,
+                        backgroundColor: scoreMeta.soft,
+                        borderColor: scoreMeta.border,
+                      }}
+                    >
+                      {scoreMeta.label}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="mobile-report-dimension-copy-block">
+                  <h4>维度功能说明</h4>
+                  <p>{dimension.functionText}</p>
+                </div>
+                <div className="mobile-report-dimension-copy-block">
+                  <h4>当前状态解读</h4>
+                  <p>{dimension.analysis}</p>
+                </div>
+                <div className="mobile-report-dimension-copy-block">
+                  <h4>后续提升建议</h4>
+                  <p>{dimension.advice}</p>
+                </div>
+              </section>
+            );
+          })}
+        </div>
+      </section>
+
+      <section className="mobile-report-boundary-card">
+        <img
+          src={BOUNDARY_WATERMARK_SRC}
+          alt=""
+          aria-hidden="true"
+          className="mobile-report-boundary-watermark"
+        />
+        <div className="mobile-report-boundary-head">
+          <span className="mobile-report-boundary-icon">
+            <FileCheck2 aria-hidden="true" strokeWidth={2} />
+          </span>
+          <h2>报告使用边界</h2>
+        </div>
+        <ul className="mobile-report-boundary-list">
+          <li>本报告仅用于提供结构化评估与准备方向参考，不构成正式法律、心理、医疗等专业意见。</li>
+          <li>报告内容基于当前测评作答生成，可能受个人情况变化和补充信息影响。</li>
+          <li>涉及离婚诉讼、抚养权、财产处理、跨境身份等重大决策时，仍建议结合律师等专业人士意见综合判断。</li>
+        </ul>
+      </section>
+
+      <footer className="mobile-report-brand-footer">
+        <LogoLockup compact src={REPORT_FOOTER_LOGO_SRC} />
+        <p>诚而信，尊而光。</p>
+      </footer>
+    </article>
+  );
+}
+
 export default function LeadReportPage({ report }) {
-  const exportRef = useRef(null);
+  const webReportRef = useRef(null);
+  const mobileReportRef = useRef(null);
+  const [previewMode, setPreviewMode] = useState("web");
+  const [isPreviewMenuOpen, setIsPreviewMenuOpen] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [feedback, setFeedback] = useState({ type: null, message: "" });
   const scoreRateValue = getProgressWidth(report.scoreRateText);
   const priorityDimensions = getPriorityDimensions(report.dimensions);
   const overallVisual = getOverallScoreVisual(report.scoreRateText);
+  const currentPreviewLabel = previewMode === "web" ? "网页端报告" : "移动端报告";
+
+  function handleSelectPreviewMode(mode) {
+    setPreviewMode(mode);
+    setIsPreviewMenuOpen(false);
+    setFeedback({ type: null, message: "" });
+  }
 
   async function handleExportImage() {
-    if (!exportRef.current || isExporting) return;
+    const activeExportRef = previewMode === "web" ? webReportRef : mobileReportRef;
+
+    if (!activeExportRef.current || isExporting) return;
 
     setIsExporting(true);
     setFeedback({ type: null, message: "" });
 
     try {
-      await waitForImages(exportRef.current);
+      await waitForImages(activeExportRef.current);
 
-      const dataUrl = await toPng(exportRef.current, {
+      const dataUrl = await toPng(activeExportRef.current, {
         cacheBust: true,
         pixelRatio: 2,
         backgroundColor: "#f4f7fb",
       });
 
       const link = document.createElement("a");
-      link.download = `lead-report-${report.id}-${Date.now()}.png`;
+      link.download = `lead-report-${previewMode}-${report.id}-${Date.now()}.png`;
       link.href = dataUrl;
       link.click();
 
@@ -399,15 +656,53 @@ export default function LeadReportPage({ report }) {
           <h2 className="report-toolbar-title">用户测评详细解读报告</h2>
           <p className="subtitle">当前页为后台内部预览页，支持固定版心报告图片导出。</p>
         </div>
-        <div className="toolbar">
-          <button
-            className="btn btn-primary"
-            type="button"
-            onClick={handleExportImage}
-            disabled={isExporting}
-          >
-            {isExporting ? "导出中..." : "导出报告图片"}
-          </button>
+        <div className="report-toolbar-actions">
+          <div className="report-preview-status" aria-live="polite">
+            当前预览：<strong>{currentPreviewLabel}</strong>
+          </div>
+          <div className="toolbar">
+            <div className="report-preview-menu-wrap">
+              <button
+                className="btn btn-muted report-preview-button"
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded={isPreviewMenuOpen}
+                onClick={() => setIsPreviewMenuOpen((isOpen) => !isOpen)}
+              >
+                预览报告
+                <ChevronDown size={16} strokeWidth={2} aria-hidden="true" />
+              </button>
+              {isPreviewMenuOpen ? (
+                <div className="report-preview-menu" role="menu">
+                  <button
+                    className={previewMode === "web" ? "active" : ""}
+                    type="button"
+                    role="menuitem"
+                    onClick={() => handleSelectPreviewMode("web")}
+                  >
+                    预览网页端报告
+                  </button>
+                  <button
+                    className={previewMode === "mobile" ? "active" : ""}
+                    type="button"
+                    role="menuitem"
+                    onClick={() => handleSelectPreviewMode("mobile")}
+                  >
+                    预览移动端报告
+                  </button>
+                </div>
+              ) : null}
+            </div>
+            <button
+              className="btn btn-primary report-export-button"
+              type="button"
+              onClick={handleExportImage}
+              disabled={isExporting}
+            >
+              <Download size={16} strokeWidth={2} aria-hidden="true" />
+              {isExporting ? "正在导出..." : "导出报告"}
+            </button>
+          </div>
         </div>
       </section>
 
@@ -419,7 +714,8 @@ export default function LeadReportPage({ report }) {
         </div>
       ) : null}
 
-      <article ref={exportRef} className="report-sheet">
+      {previewMode === "web" ? (
+      <article ref={webReportRef} className="report-sheet">
         <section className="report-hero">
           <div className="report-hero-brand">
             <LogoLockup src={REPORT_HEADER_LOGO_SRC} />
@@ -607,6 +903,15 @@ export default function LeadReportPage({ report }) {
           <p className="report-footer-slogan">诚而信，尊而光</p>
         </footer>
       </article>
+      ) : (
+        <MobileLeadReportView
+          report={report}
+          reportRef={mobileReportRef}
+          priorityDimensions={priorityDimensions}
+          overallVisual={overallVisual}
+          scoreRateValue={scoreRateValue}
+        />
+      )}
     </div>
   );
 }
