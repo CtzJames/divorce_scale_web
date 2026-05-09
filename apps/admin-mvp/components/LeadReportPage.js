@@ -23,9 +23,9 @@ import { toPng } from "html-to-image";
 import AdminDimensionRadarChart from "./AdminDimensionRadarChart";
 
 const REPORT_HEADER_LOGO_SRC = "/assets/ZUNERGUANGLOGO01.png";
-const REPORT_FOOTER_LOGO_SRC = "/assets/ZUNERGUANGLOGO02.png";
 const HERO_WATERMARK_SRC = "/assets/report-watermark-hero.png";
 const BOUNDARY_WATERMARK_SRC = "/assets/report-watermark-boundary.png";
+const REPORT_FOOTER_SLOGAN = "法愈人生，帮你找到适合自己的方式。";
 
 const DIMENSION_META = {
   D1: {
@@ -275,6 +275,15 @@ function LogoLockup({ compact = false, src }) {
         <strong>尊而光律师事务所</strong>
         <span>PRIDE&BRIGHT LAWYERS</span>
       </div>
+    </div>
+  );
+}
+
+function ReportFooterBrand() {
+  return (
+    <div className="report-footer-brand" aria-label="Sandra婚姻家事团队">
+      <span className="report-footer-brand-en">Sandra</span>
+      <span className="report-footer-brand-cn">婚姻家事团队</span>
     </div>
   );
 }
@@ -593,8 +602,8 @@ function MobileLeadReportView({
       </section>
 
       <footer className="mobile-report-brand-footer">
-        <LogoLockup compact src={REPORT_FOOTER_LOGO_SRC} />
-        <p>诚而信，尊而光。</p>
+        <ReportFooterBrand />
+        <p>{REPORT_FOOTER_SLOGAN}</p>
       </footer>
     </article>
   );
@@ -899,8 +908,8 @@ export default function LeadReportPage({ report }) {
         </section>
 
         <footer className="report-footer">
-          <LogoLockup compact src={REPORT_FOOTER_LOGO_SRC} />
-          <p className="report-footer-slogan">诚而信，尊而光</p>
+          <ReportFooterBrand />
+          <p className="report-footer-slogan">{REPORT_FOOTER_SLOGAN}</p>
         </footer>
       </article>
       ) : (

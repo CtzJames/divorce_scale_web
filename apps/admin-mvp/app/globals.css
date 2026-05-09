@@ -1268,24 +1268,51 @@ th {
 .report-footer {
   position: relative;
   display: flex;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: center;
-  gap: 18px;
-  padding: 18px 24px;
+  gap: 32px;
+  padding: 20px 28px;
   border-radius: 14px;
   background: linear-gradient(90deg, #0f356b 0%, #133a74 100%);
   color: #fff;
 }
 
+.report-footer-brand {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  gap: 7px;
+  color: #fff;
+  font-family: "Palatino Linotype", "Book Antiqua", Palatino, "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  line-height: 1;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.report-footer-brand-en {
+  font-size: 22px;
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: 0.015em;
+}
+
+.report-footer-brand-cn {
+  font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", serif;
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 0.05em;
+}
+
 .report-footer-slogan {
   margin: 0;
-  position: absolute;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 18px;
-  letter-spacing: 0.18em;
+  color: rgba(255, 255, 255, 0.96);
+  font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", serif;
+  font-size: 17.5px;
+  font-weight: 400;
+  line-height: 1.4;
+  letter-spacing: 0.07em;
   white-space: nowrap;
-  text-align: center;
+  text-align: right;
 }
 
 .mobile-report-sheet {
@@ -1822,30 +1849,34 @@ th {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 24px;
+  gap: 28px;
   padding: 28px 30px;
   border-radius: 16px;
   background: linear-gradient(90deg, #0f356b 0%, #133a74 100%);
   color: #fff;
 }
 
-.mobile-report-brand-footer .report-logo-lockup {
+.mobile-report-brand-footer .report-footer-brand {
   flex: 0 0 auto;
 }
 
-.mobile-report-brand-footer .report-logo-lockup.compact .report-logo-image {
-  width: 198px;
-  height: 50px;
-  object-position: left center;
+.mobile-report-brand-footer .report-footer-brand-en {
+  font-size: 23px;
+}
+
+.mobile-report-brand-footer .report-footer-brand-cn {
+  font-size: 19px;
 }
 
 .mobile-report-brand-footer p {
   margin: 0;
   margin-left: auto;
-  color: #fff;
-  font-size: 22px;
+  color: rgba(255, 255, 255, 0.96);
+  font-family: "Noto Serif SC", "Source Han Serif SC", "Songti SC", "STSong", "SimSun", serif;
+  font-size: 17.5px;
+  font-weight: 400;
   line-height: 1.4;
-  letter-spacing: 0.16em;
+  letter-spacing: 0.06em;
   text-align: right;
   white-space: nowrap;
 }
@@ -2011,6 +2042,7 @@ th {
 
   .report-footer-slogan {
     white-space: normal;
-    letter-spacing: 0.08em;
+    text-align: left;
+    letter-spacing: 0.02em;
   }
 }
