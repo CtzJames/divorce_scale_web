@@ -262,6 +262,24 @@ async function waitForImages(container) {
   );
 }
 
+function sanitizeFileNamePart(value) {
+  return String(value || "")
+    .trim()
+    .replace(/[\\/:*?"<>|]/g, "")
+    .replace(/\s+/g, " ")
+    .slice(0, 80);
+}
+
+function getPdfReportFileName(report) {
+  const identity = sanitizeFileNamePart(report.contactName || report.id);
+
+  if (!identity) {
+    return "离婚力量表详细报告.pdf";
+  }
+
+  return `离婚力量表详细报告-${identity}.pdf`;
+}
+
 function LogoLockup({ compact = false, src }) {
   return (
     <div className={`report-logo-lockup${compact ? " compact" : ""}`}>
@@ -614,16 +632,29 @@ export default function LeadReportPage({ report }) {
   const mobileReportRef = useRef(null);
   const [previewMode, setPreviewMode] = useState("web");
   const [isPreviewMenuOpen, setIsPreviewMenuOpen] = useState(false);
-  const [isExporting, setIsExporting] = useState(false);
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const [exportingType, setExportingType] = useState(null);
   const [feedback, setFeedback] = useState({ type: null, message: "" });
   const scoreRateValue = getProgressWidth(report.scoreRateText);
   const priorityDimensions = getPriorityDimensions(report.dimensions);
   const overallVisual = getOverallScoreVisual(report.scoreRateText);
   const currentPreviewLabel = previewMode === "web" ? "网页端报告" : "移动端报告";
+  const isExporting = exportingType !== null;
+  const exportButtonLabel =
+    exportingType === "png"
+      ? "正在导出图片..."
+      : exportingType === "pdf"
+        ? "正在导出 PDF..."
+        : "导出报告";
+  const includedDimensionText =
+    report.dimensions.map((dimension) => dimension.shortName || dimension.code).join("、") ||
+    "-";
+  const totalA4Pages = report.dimensions.length + 3;
 
   function handleSelectPreviewMode(mode) {
     setPreviewMode(mode);
     setIsPreviewMenuOpen(false);
+    setIsExportMenuOpen(false);
     setFeedback({ type: null, message: "" });
   }
 
@@ -632,7 +663,8 @@ export default function LeadReportPage({ report }) {
 
     if (!activeExportRef.current || isExporting) return;
 
-    setIsExporting(true);
+    setIsExportMenuOpen(false);
+    setExportingType("png");
     setFeedback({ type: null, message: "" });
 
     try {
@@ -654,7 +686,56 @@ export default function LeadReportPage({ report }) {
       console.error("Report export failed:", error);
       setFeedback({ type: "error", message: "导出失败，请稍后重试。" });
     } finally {
-      setIsExporting(false);
+      setExportingType(null);
+    }
+  }
+
+  async function handleExportPdf() {
+    const reportNode = webReportRef.current;
+
+    if (!reportNode || isExporting) return;
+
+    setIsExportMenuOpen(false);
+    setExportingType("pdf");
+    setFeedback({ type: null, message: "" });
+
+    try {
+      const pageNodes = Array.from(reportNode.querySelectorAll(".a4-report-page"));
+
+      if (pageNodes.length === 0) {
+        console.error("PDF export failed: no .a4-report-page nodes found.");
+        setFeedback({ type: "error", message: "未找到可导出的 A4 报告页面。" });
+        return;
+      }
+
+      const { jsPDF } = await import("jspdf");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidth = 210;
+      const pageHeight = 297;
+
+      for (const [index, pageNode] of pageNodes.entries()) {
+        await waitForImages(pageNode);
+
+        const dataUrl = await toPng(pageNode, {
+          cacheBust: true,
+          pixelRatio: 2,
+          backgroundColor: "#ffffff",
+        });
+
+        if (index > 0) {
+          pdf.addPage();
+        }
+
+        pdf.addImage(dataUrl, "PNG", 0, 0, pageWidth, pageHeight);
+      }
+
+      pdf.save(getPdfReportFileName(report));
+      setFeedback({ type: "success", message: "已导出详细解读报告 PDF。" });
+    } catch (error) {
+      console.error("PDF export failed:", error);
+      setFeedback({ type: "error", message: "PDF 导出失败，请稍后重试。" });
+    } finally {
+      setExportingType(null);
     }
   }
 
@@ -676,7 +757,10 @@ export default function LeadReportPage({ report }) {
                 type="button"
                 aria-haspopup="menu"
                 aria-expanded={isPreviewMenuOpen}
-                onClick={() => setIsPreviewMenuOpen((isOpen) => !isOpen)}
+                onClick={() => {
+                  setIsExportMenuOpen(false);
+                  setIsPreviewMenuOpen((isOpen) => !isOpen);
+                }}
               >
                 预览报告
                 <ChevronDown size={16} strokeWidth={2} aria-hidden="true" />
@@ -702,15 +786,43 @@ export default function LeadReportPage({ report }) {
                 </div>
               ) : null}
             </div>
-            <button
-              className="btn btn-primary report-export-button"
-              type="button"
-              onClick={handleExportImage}
-              disabled={isExporting}
-            >
-              <Download size={16} strokeWidth={2} aria-hidden="true" />
-              {isExporting ? "正在导出..." : "导出报告"}
-            </button>
+            <div className="report-export-menu-wrap">
+              <button
+                className="btn btn-primary report-export-button"
+                type="button"
+                aria-haspopup="menu"
+                aria-expanded={isExportMenuOpen}
+                onClick={() => {
+                  setIsPreviewMenuOpen(false);
+                  setIsExportMenuOpen((isOpen) => !isOpen);
+                }}
+                disabled={isExporting}
+              >
+                <Download size={16} strokeWidth={2} aria-hidden="true" />
+                {exportButtonLabel}
+                <ChevronDown size={16} strokeWidth={2} aria-hidden="true" />
+              </button>
+              {isExportMenuOpen ? (
+                <div className="report-export-menu" role="menu">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={handleExportImage}
+                    disabled={isExporting}
+                  >
+                    导出图片 PNG
+                  </button>
+                  <button
+                    type="button"
+                    role="menuitem"
+                    onClick={handleExportPdf}
+                    disabled={isExporting}
+                  >
+                    导出 PDF
+                  </button>
+                </div>
+              ) : null}
+            </div>
           </div>
         </div>
       </section>
@@ -723,196 +835,305 @@ export default function LeadReportPage({ report }) {
         </div>
       ) : null}
 
-      {previewMode === "web" ? (
-      <article ref={webReportRef} className="report-sheet">
-        <section className="report-hero">
-          <div className="report-hero-brand">
-            <LogoLockup src={REPORT_HEADER_LOGO_SRC} />
-            <div className="report-hero-meta">
-              <span className="report-chip">内部资料</span>
-              <span className="report-chip report-chip-muted">仅限内部使用</span>
-              <p>报告生成时间：{report.reportGeneratedAtText || "-"}</p>
-            </div>
-          </div>
+      <article
+        ref={webReportRef}
+        className={`a4-report-document${previewMode === "mobile" ? " a4-report-export-mount" : ""}`}
+        aria-hidden={previewMode === "mobile"}
+      >
+          <section className="a4-report-page a4-report-cover">
+            <img
+              src={HERO_WATERMARK_SRC}
+              alt=""
+              aria-hidden="true"
+              className="a4-report-watermark a4-report-cover-watermark"
+            />
+            <header className="a4-report-cover-header">
+              <LogoLockup src={REPORT_HEADER_LOGO_SRC} />
+              <div className="a4-report-badge-row">
+                <span className="a4-report-badge">内部资料</span>
+                <span className="a4-report-badge is-muted">仅限内部使用</span>
+              </div>
+            </header>
 
-          <img
-            src={HERO_WATERMARK_SRC}
-            alt=""
-            aria-hidden="true"
-            className="report-hero-watermark"
-          />
+            <div className="a4-report-cover-main">
+              <div className="a4-report-title-block">
+                <p className="a4-report-kicker">离婚准备度综合评估</p>
+                <h1>测评结果详细解读报告</h1>
+                <p>
+                  本报告基于对您在心理、经济、亲权、财权、知法、情感与域外七个维度的评估，
+                  结合当前阶段个体情况，形成离婚准备度综合评估结果与针对性建议，
+                  为您制定下一步行动计划、优化决策与风险防控提供参考。
+                </p>
+              </div>
 
-          <div className="report-hero-main">
-            <h1>测评结果详细解读报告</h1>
-            <h2>离婚准备度综合评估</h2>
-            <p className="report-summary">
-              本报告基于对您在心理、经济、亲权、财权、知法、情感与域外七个维度的评估，
-              结合当前阶段个体情况，形成离婚准备度综合评估结果与针对性建议，
-              为您制定下一步行动计划、优化决策与风险防控提供参考。
-            </p>
-          </div>
-        </section>
+              <div className="a4-report-cover-meta">
+                <div>
+                  <span>用户称呼</span>
+                  <strong>{report.contactName || "-"}</strong>
+                </div>
+                <div>
+                  <span>报告生成时间</span>
+                  <strong>{report.reportGeneratedAtText || "-"}</strong>
+                </div>
+              </div>
 
-        <section className="report-summary-board">
-          <div
-            className="report-result-card"
-            style={{ background: overallVisual.gradient }}
-          >
-            <div className="report-result-card-mark">
-              <StatIcon kind="result" className="report-result-icon" />
-            </div>
-            <span>您的综合评估结果</span>
-            <strong>{report.totalResult.label}</strong>
-            <p>{getExecutiveSummary(report.resultLevel)}</p>
-          </div>
-
-          <div className="report-rate-card">
-            <span className="report-card-kicker">综合得分率</span>
-            <strong style={{ color: overallVisual.main }}>{report.scoreRateText}</strong>
-            <div
-              className="report-progress-track"
-              style={{ backgroundColor: overallVisual.track }}
-            >
-              <div
-                className="report-progress-bar"
-                style={{
-                  width: `${scoreRateValue}%`,
-                  background: `linear-gradient(90deg, ${overallVisual.deep} 0%, ${overallVisual.main} 100%)`,
-                }}
-              />
-            </div>
-            <p style={{ color: overallVisual.text }}>{getScoreRateStatus(report.scoreRateText)}</p>
-          </div>
-
-          <div className="report-metrics-grid">
-            <div className="report-metric-card">
-              <StatIcon kind="score" />
-              <span>总分</span>
-              <strong>{report.totalScore}</strong>
-            </div>
-            <div className="report-metric-card">
-              <StatIcon kind="total" />
-              <span>动态满分</span>
-              <strong>{report.dynamicFullScore}</strong>
-            </div>
-            <div className="report-metric-card">
-              <StatIcon kind="dimension" />
-              <span>纳入维度</span>
-              <strong>{report.dimensions.length} 项</strong>
-            </div>
-            <div className="report-metric-card">
-              <StatIcon kind="priority" />
-              <span>优先补强维度</span>
-              <strong>{priorityDimensions || "-"}</strong>
-            </div>
-          </div>
-        </section>
-
-        <div className="report-tip-bar">
-          <StatIcon kind="tip" className="report-tip-icon" />
-          <p>
-            <strong>总体评价：</strong>
-            {report.totalResult.summary}
-          </p>
-        </div>
-
-        <section className="report-section">
-          <div className="report-section-title">
-            <i />
-            <h2>维度结构概览</h2>
-          </div>
-
-          <div className="report-structure-grid">
-            <div className="report-radar-panel">
-              <AdminDimensionRadarChart dimensions={report.dimensions} />
+              <div className="a4-report-cover-score">
+                <div
+                  className="a4-report-result-panel"
+                  style={{ background: overallVisual.gradient }}
+                >
+                  <span>您的综合评估结果</span>
+                  <strong>{report.totalResult.label}</strong>
+                  <p>{getExecutiveSummary(report.resultLevel)}</p>
+                </div>
+                <div className="a4-report-rate-panel">
+                  <span>综合得分率</span>
+                  <strong style={{ color: overallVisual.main }}>{report.scoreRateText}</strong>
+                  <div
+                    className="a4-report-progress-track"
+                    style={{ backgroundColor: overallVisual.track }}
+                  >
+                    <i
+                      style={{
+                        width: `${scoreRateValue}%`,
+                        background: `linear-gradient(90deg, ${overallVisual.deep} 0%, ${overallVisual.main} 100%)`,
+                      }}
+                    />
+                  </div>
+                  <p style={{ color: overallVisual.text }}>
+                    {getScoreRateStatus(report.scoreRateText)}
+                  </p>
+                </div>
+              </div>
             </div>
 
-            <div className="report-dimension-overview-grid">
-            {report.dimensions.map((dimension) => {
-              const meta = DIMENSION_META[dimension.code] || DIMENSION_META.D1;
-              const scoreMeta = getDimensionScoreVisual(dimension.avg);
+            <footer className="a4-report-cover-footer">
+              <ReportFooterBrand />
+              <p className="a4-report-footer-slogan">{REPORT_FOOTER_SLOGAN}</p>
+            </footer>
+          </section>
 
-                return (
-                  <section key={dimension.code} className="dimension-overview-card">
-                    <div className="dimension-overview-head">
-                      <DimensionIcon code={dimension.code} />
+          <section className="a4-report-page a4-report-overview">
+            <header className="a4-report-page-header">
+              <LogoLockup compact src={REPORT_HEADER_LOGO_SRC} />
+              <span>总体评价与维度概览</span>
+            </header>
+
+            <main className="a4-report-page-body">
+              <div className="a4-report-section-heading">
+                <i />
+                <div>
+                  <h2>总体评价</h2>
+                </div>
+              </div>
+
+              <div className="a4-report-overall-card">
+                <StatIcon kind="tip" className="a4-report-overall-icon" />
+                <p>{report.totalResult.summary}</p>
+              </div>
+
+              <div className="a4-report-metric-grid">
+                <div className="a4-report-metric-card">
+                  <StatIcon kind="score" />
+                  <span>总分</span>
+                  <strong>{report.totalScore}</strong>
+                </div>
+                <div className="a4-report-metric-card">
+                  <StatIcon kind="total" />
+                  <span>动态满分</span>
+                  <strong>{report.dynamicFullScore}</strong>
+                </div>
+                <div className="a4-report-metric-card">
+                  <StatIcon kind="score" />
+                  <span>得分率</span>
+                  <strong>{report.scoreRateText}</strong>
+                </div>
+                <div className="a4-report-metric-card">
+                  <StatIcon kind="result" />
+                  <span>结果等级</span>
+                  <strong>{report.totalResult.label}</strong>
+                </div>
+                <div className="a4-report-metric-card">
+                  <StatIcon kind="dimension" />
+                  <span>纳入报告维度</span>
+                  <strong>{report.dimensions.length} 项</strong>
+                </div>
+              </div>
+
+              <div className="a4-report-included-panel">
+                <span>纳入报告维度</span>
+                <strong>{includedDimensionText}</strong>
+              </div>
+
+              <div className="a4-report-section-heading">
+                <i />
+                <div>
+                  <h2>维度结构概览</h2>
+                </div>
+              </div>
+
+              <div className="a4-report-structure-grid">
+                <div className="a4-report-radar-panel">
+                  <AdminDimensionRadarChart dimensions={report.dimensions} />
+                </div>
+
+                <div className="a4-report-dimension-overview-list">
+                  {report.dimensions.map((dimension) => {
+                    const meta = DIMENSION_META[dimension.code] || DIMENSION_META.D1;
+                    const scoreMeta = getDimensionScoreVisual(dimension.avg);
+
+                    return (
+                      <section key={dimension.code} className="a4-report-dimension-overview-card">
+                        <div className="a4-report-dimension-overview-name">
+                          <span
+                            className="a4-report-dimension-code"
+                            style={{
+                              color: meta.accent,
+                              backgroundColor: meta.tint,
+                              borderColor: `${meta.accent}33`,
+                            }}
+                          >
+                            {dimension.code}
+                          </span>
+                          <div>
+                            <h3>{dimension.shortName || meta.shortLabel}</h3>
+                            <p>{dimension.name}</p>
+                          </div>
+                        </div>
+                        <div className="a4-report-dimension-overview-score">
+                          <strong style={{ color: scoreMeta.main }}>
+                            {formatScore(dimension.avg)}
+                          </strong>
+                          <span>/ 5</span>
+                        </div>
+                      </section>
+                    );
+                  })}
+                </div>
+              </div>
+            </main>
+
+            <footer className="a4-report-page-footer">
+              <span>测评结果详细解读报告</span>
+              <span>02 / {String(totalA4Pages).padStart(2, "0")}</span>
+            </footer>
+          </section>
+
+          {report.dimensions.map((dimension, index) => {
+            const meta = DIMENSION_META[dimension.code] || DIMENSION_META.D1;
+            const scoreMeta = getDimensionScoreVisual(dimension.avg);
+            const pageNumber = index + 3;
+
+            return (
+              <section
+                key={dimension.code}
+                className="a4-report-page a4-report-dimension-page"
+              >
+                <header className="a4-report-page-header">
+                  <LogoLockup compact src={REPORT_HEADER_LOGO_SRC} />
+                  <span>维度详细解读</span>
+                </header>
+
+                <main className="a4-report-page-body">
+                  <div className="a4-report-dimension-hero">
+                    <div className="a4-report-dimension-title">
+                      <span
+                        className="a4-report-dimension-code is-large"
+                        style={{
+                          color: meta.accent,
+                          backgroundColor: meta.tint,
+                          borderColor: `${meta.accent}33`,
+                        }}
+                      >
+                        {dimension.code}
+                      </span>
                       <div>
-                        <h3>{meta.shortLabel}</h3>
-                        <p>平均得分</p>
+                        <h2>{dimension.name}</h2>
+                        <p>{dimension.functionText}</p>
                       </div>
                     </div>
-                    <div className="dimension-overview-score">
+                    <div className="a4-report-dimension-score-card">
+                      <span>平均分</span>
                       <strong style={{ color: scoreMeta.main }}>
                         {formatScore(dimension.avg)}
                       </strong>
-                      <span>/5</span>
+                      <em>/ 5</em>
+                      <i
+                        style={{
+                          color: scoreMeta.text,
+                          backgroundColor: scoreMeta.soft,
+                          borderColor: scoreMeta.border,
+                        }}
+                      >
+                        {scoreMeta.label}
+                      </i>
                     </div>
-                  </section>
-                );
-              })}
-            </div>
-          </div>
-        </section>
-
-        <section className="report-section">
-          <div className="report-section-title">
-            <i />
-            <h2>七维度详细解读</h2>
-          </div>
-
-          <div className="report-dimension-list">
-            {report.dimensions.map((dimension) => {
-              return (
-                <section key={dimension.code} className="report-dimension-card">
-                  <DimensionIdentity dimension={dimension} />
-
-                  <div className="report-dimension-content">
-                    <h4>当前状态解读</h4>
-                    <p>{dimension.analysis}</p>
                   </div>
 
-                  <div className="report-dimension-content">
-                    <h4>后续提升建议</h4>
-                    <p>{dimension.advice}</p>
+                  <div className="a4-report-dimension-copy-grid">
+                    <section className="a4-report-copy-block">
+                      <h3>维度功能说明</h3>
+                      <p>{dimension.functionText}</p>
+                    </section>
+                    <section className="a4-report-copy-block">
+                      <h3>当前状态解读</h3>
+                      <p>{dimension.analysis}</p>
+                    </section>
+                    <section className="a4-report-copy-block">
+                      <h3>后续提升建议</h3>
+                      <p>{dimension.advice}</p>
+                    </section>
                   </div>
+                </main>
 
-                  <div className="report-dimension-score-box">
-                    <ScorePill score={dimension.avg} />
-                  </div>
-                </section>
-              );
-            })}
-          </div>
-        </section>
+                <footer className="a4-report-page-footer">
+                  <span>{dimension.code} · {dimension.name}</span>
+                  <span>
+                    {String(pageNumber).padStart(2, "0")} /{" "}
+                    {String(totalA4Pages).padStart(2, "0")}
+                  </span>
+                </footer>
+              </section>
+            );
+          })}
 
-        <section className="report-boundary-panel">
-          <div className="report-boundary-head">
-            <span className="report-boundary-icon">
-              <FileCheck2 aria-hidden="true" strokeWidth={2} />
-            </span>
-            <div>
-              <h2>报告使用边界</h2>
-              <ul className="report-boundary-list">
+          <section className="a4-report-page a4-report-boundary-page">
+            <img
+              src={BOUNDARY_WATERMARK_SRC}
+              alt=""
+              aria-hidden="true"
+              className="a4-report-watermark a4-report-boundary-watermark"
+            />
+            <header className="a4-report-page-header">
+              <LogoLockup compact src={REPORT_HEADER_LOGO_SRC} />
+              <span>报告使用边界</span>
+            </header>
+
+            <main className="a4-report-page-body">
+              <div className="a4-report-boundary-title">
+                <span className="a4-report-boundary-icon">
+                  <FileCheck2 aria-hidden="true" strokeWidth={2} />
+                </span>
+                <div>
+                  <h2>报告使用边界</h2>
+                </div>
+              </div>
+
+              <ul className="a4-report-boundary-list">
                 <li>本报告仅用于提供结构化评估与准备方向参考，不构成正式法律意见或诉讼策略。</li>
                 <li>报告内容基于当前测评作答生成，可能受个人情况变化和补充信息影响。</li>
                 <li>涉及离婚诉讼、抚养权、财产处理、跨境身份等重大决策时，仍建议结合律师等专业人士意见综合判断。</li>
               </ul>
-            </div>
-          </div>
-          <img
-            src={BOUNDARY_WATERMARK_SRC}
-            alt=""
-            aria-hidden="true"
-            className="report-boundary-watermark"
-          />
-        </section>
+            </main>
 
-        <footer className="report-footer">
-          <ReportFooterBrand />
-          <p className="report-footer-slogan">{REPORT_FOOTER_SLOGAN}</p>
-        </footer>
+            <footer className="a4-report-final-footer">
+              <ReportFooterBrand />
+              <p className="a4-report-footer-slogan">{REPORT_FOOTER_SLOGAN}</p>
+            </footer>
+          </section>
       </article>
-      ) : (
+
+      {previewMode === "mobile" ? (
         <MobileLeadReportView
           report={report}
           reportRef={mobileReportRef}
@@ -920,7 +1141,7 @@ export default function LeadReportPage({ report }) {
           overallVisual={overallVisual}
           scoreRateValue={scoreRateValue}
         />
-      )}
+      ) : null}
     </div>
   );
 }
