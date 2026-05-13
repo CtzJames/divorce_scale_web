@@ -21,11 +21,15 @@ import {
 } from "lucide-react";
 import { toPng } from "html-to-image";
 import AdminDimensionRadarChart from "./AdminDimensionRadarChart";
+import { teamIntroContent } from "../lib/teamIntroContent";
 
 const REPORT_HEADER_LOGO_SRC = "/assets/ZUNERGUANGLOGO01.png";
 const HERO_WATERMARK_SRC = "/assets/report-watermark-hero.png";
 const BOUNDARY_WATERMARK_SRC = "/assets/report-watermark-boundary.png";
 const REPORT_FOOTER_SLOGAN = "法愈人生，帮你找到适合自己的方式。";
+const TEAM_INTRO_PAGE_COUNT = 3;
+const TEAM_INTRO_FIRST_PAGE_SECTIONS = teamIntroContent.sections.slice(0, 4);
+const TEAM_INTRO_SECOND_PAGE_SECTIONS = teamIntroContent.sections.slice(4);
 
 const DIMENSION_META = {
   D1: {
@@ -303,6 +307,172 @@ function ReportFooterBrand() {
       <span className="report-footer-brand-en">Sandra</span>
       <span className="report-footer-brand-cn">婚姻家事团队</span>
     </div>
+  );
+}
+
+function renderTeamRichText(parts) {
+  return parts.map((part, index) =>
+    part.strong ? (
+      <strong key={`${part.text}-${index}`}>{part.text}</strong>
+    ) : (
+      <span key={`${part.text}-${index}`}>{part.text}</span>
+    ),
+  );
+}
+
+function A4TeamIntroPageFooter({ pageNumber, totalPages }) {
+  return (
+    <footer className="a4-report-page-footer a4-report-team-footer">
+      <span>Sandra 婚姻家事团队介绍附录</span>
+      <span>
+        {String(pageNumber).padStart(2, "0")} /{" "}
+        {String(totalPages).padStart(2, "0")}
+      </span>
+    </footer>
+  );
+}
+
+function A4TeamIntroCard({ section, index, compact = false }) {
+  return (
+    <section className={`a4-report-team-card${compact ? " is-compact" : ""}`}>
+      <div className="a4-report-team-card-head">
+        <span className="a4-report-team-card-index">
+          {String(index).padStart(2, "0")}
+        </span>
+        <h3>{section.title}</h3>
+      </div>
+      <div className="a4-report-team-card-copy">
+        {section.paragraphs.map((paragraph, index) => (
+          <p key={`${section.title}-${index}`}>{renderTeamRichText(paragraph)}</p>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function A4TeamIntroPages({ startPageNumber, totalPages }) {
+  return (
+    <>
+      <section className="a4-report-page a4-report-team-page a4-report-team-intro-page">
+        <img
+          src={BOUNDARY_WATERMARK_SRC}
+          alt=""
+          aria-hidden="true"
+          className="a4-report-watermark a4-report-team-watermark"
+        />
+        <header className="a4-report-page-header">
+          <LogoLockup compact src={REPORT_HEADER_LOGO_SRC} />
+          <span>团队介绍附录</span>
+        </header>
+
+        <main className="a4-report-page-body a4-report-team-body">
+          <div className="a4-report-team-hero">
+            <div>
+              <h2>{teamIntroContent.title}</h2>
+              <p>{teamIntroContent.subtitle}</p>
+            </div>
+          </div>
+
+          <div className="a4-report-team-lead">
+            {teamIntroContent.introParagraphs.map((paragraph, index) => (
+              <p key={`team-intro-${index}`}>{renderTeamRichText(paragraph)}</p>
+            ))}
+          </div>
+        </main>
+
+        <A4TeamIntroPageFooter
+          pageNumber={startPageNumber}
+          totalPages={totalPages}
+        />
+      </section>
+
+      <section className="a4-report-page a4-report-team-page a4-report-team-service-page">
+        <img
+          src={BOUNDARY_WATERMARK_SRC}
+          alt=""
+          aria-hidden="true"
+          className="a4-report-watermark a4-report-team-watermark"
+        />
+        <header className="a4-report-page-header">
+          <LogoLockup compact src={REPORT_HEADER_LOGO_SRC} />
+          <span>团队核心服务能力</span>
+        </header>
+
+        <main className="a4-report-page-body a4-report-team-body">
+          <div className="a4-report-section-heading a4-report-team-heading">
+            <i />
+            <div>
+              <h2>团队核心服务能力</h2>
+            </div>
+          </div>
+
+          <div className="a4-report-team-section-grid">
+            {TEAM_INTRO_FIRST_PAGE_SECTIONS.map((section, index) => (
+              <A4TeamIntroCard
+                key={section.title}
+                section={section}
+                index={index + 1}
+              />
+            ))}
+          </div>
+        </main>
+
+        <A4TeamIntroPageFooter
+          pageNumber={startPageNumber + 1}
+          totalPages={totalPages}
+        />
+      </section>
+
+      <section className="a4-report-page a4-report-team-page a4-report-team-closing-page">
+        <img
+          src={BOUNDARY_WATERMARK_SRC}
+          alt=""
+          aria-hidden="true"
+          className="a4-report-watermark a4-report-team-watermark"
+        />
+        <header className="a4-report-page-header">
+          <LogoLockup compact src={REPORT_HEADER_LOGO_SRC} />
+          <span>团队核心服务能力</span>
+        </header>
+
+        <main className="a4-report-page-body a4-report-team-body">
+          <div className="a4-report-section-heading a4-report-team-heading">
+            <i />
+            <div>
+              <h2>团队核心服务能力（续）</h2>
+            </div>
+          </div>
+
+          <div className="a4-report-team-section-grid">
+            {TEAM_INTRO_SECOND_PAGE_SECTIONS.map((section, index) => (
+              <A4TeamIntroCard
+                key={section.title}
+                section={section}
+                index={index + 5}
+                compact
+              />
+            ))}
+          </div>
+
+          <section className="a4-report-team-closing">
+            <div className="a4-report-team-closing-head">
+              <span>结语</span>
+              <h3>{teamIntroContent.closingTitle}</h3>
+            </div>
+            <div className="a4-report-team-card-copy">
+              {teamIntroContent.closingParagraphs.map((paragraph, index) => (
+                <p key={`team-closing-${index}`}>{renderTeamRichText(paragraph)}</p>
+              ))}
+            </div>
+          </section>
+        </main>
+
+        <A4TeamIntroPageFooter
+          pageNumber={startPageNumber + 2}
+          totalPages={totalPages}
+        />
+      </section>
+    </>
   );
 }
 
@@ -619,6 +789,20 @@ function MobileLeadReportView({
         </ul>
       </section>
 
+      <section className="mobile-report-card mobile-report-team-card">
+        <div className="mobile-report-section-title">
+          <i />
+          <h2>{teamIntroContent.title}</h2>
+        </div>
+        <div className="mobile-report-team-copy">
+          {teamIntroContent.introParagraphs.map((paragraph, index) => (
+            <p key={`mobile-team-intro-${index}`}>
+              {renderTeamRichText(paragraph)}
+            </p>
+          ))}
+        </div>
+      </section>
+
       <footer className="mobile-report-brand-footer">
         <ReportFooterBrand />
         <p>{REPORT_FOOTER_SLOGAN}</p>
@@ -649,7 +833,8 @@ export default function LeadReportPage({ report }) {
   const includedDimensionText =
     report.dimensions.map((dimension) => dimension.shortName || dimension.code).join("、") ||
     "-";
-  const totalA4Pages = report.dimensions.length + 3;
+  const totalA4Pages = report.dimensions.length + 3 + TEAM_INTRO_PAGE_COUNT;
+  const teamIntroStartPageNumber = report.dimensions.length + 4;
 
   function handleSelectPreviewMode(mode) {
     setPreviewMode(mode);
@@ -1131,6 +1316,11 @@ export default function LeadReportPage({ report }) {
               <p className="a4-report-footer-slogan">{REPORT_FOOTER_SLOGAN}</p>
             </footer>
           </section>
+
+          <A4TeamIntroPages
+            startPageNumber={teamIntroStartPageNumber}
+            totalPages={totalA4Pages}
+          />
       </article>
 
       {previewMode === "mobile" ? (
