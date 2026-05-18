@@ -6,27 +6,27 @@ export const NARCISSISM_RISK_DIMENSIONS = {
   N1: {
     code: "N1",
     name: "自我重要感与特权感",
-    shortName: "特权",
+    shortName: "自我中心",
   },
   N2: {
     code: "N2",
     name: "赞赏依赖与羞耻暴怒",
-    shortName: "暴怒",
+    shortName: "受挫反应",
   },
   N3: {
     code: "N3",
     name: "共情缺损与责任外归因",
-    shortName: "共情",
+    shortName: "情感回应",
   },
   N4: {
     code: "N4",
     name: "操控剥削与第三方动员",
-    shortName: "操控",
+    shortName: "关系施压",
   },
   N5: {
     code: "N5",
     name: "高冲突升级与安全风险",
-    shortName: "升级",
+    shortName: "冲突升级",
   },
 };
 
@@ -36,6 +36,13 @@ export const NARCISSISM_RISK_LIKERT_OPTIONS = [
   { label: "一般符合", value: 3 },
   { label: "基本符合", value: 4 },
   { label: "完全符合", value: 5 },
+];
+
+export const NARCISSISM_RISK_NA_VALUE = "na";
+
+export const NARCISSISM_RISK_ANSWER_OPTIONS = [
+  ...NARCISSISM_RISK_LIKERT_OPTIONS,
+  { label: "与本人情况无关", value: NARCISSISM_RISK_NA_VALUE },
 ];
 
 export const NARCISSISM_RISK_REVERSE_QUESTION_IDS = [
@@ -55,6 +62,8 @@ export const NARCISSISM_RISK_HIGH_RISK_QUESTION_IDS = [
 
 export const NARCISSISM_RISK_QUESTION_COUNT = 40;
 export const NARCISSISM_RISK_FULL_SCORE = 200;
+export const NARCISSISM_RISK_LOW_VALID_ANSWER_THRESHOLD = 30;
+export const NARCISSISM_RISK_DIMENSION_LOW_VALID_THRESHOLD = 4;
 
 function createNarcissismRiskQuestion({
   question_id,
@@ -78,7 +87,7 @@ function createNarcissismRiskQuestion({
     reverse_scored: reverseScored,
     high_risk_trigger: highRiskTrigger,
     required: true,
-    allow_not_applicable: false,
+    allow_not_applicable: true,
     included_in_total: true,
     included_in_dimension_avg: true,
     measurement_focus,

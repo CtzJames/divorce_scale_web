@@ -112,6 +112,24 @@ export const NARCISSISM_RISK_HIGH_RISK_COPY = {
   },
 };
 
+export const NARCISSISM_RISK_VALIDITY_COPY = {
+  lowValidity: {
+    title: "有效作答较少，结果参考性有限",
+    body:
+      "本次有效作答题数较少，测评结果可能无法完整反映关系中的风险结构。建议结合实际关系阶段和不适用题目情况理解本结果。",
+  },
+  dimensionLowValidity: {
+    title: "部分维度有效作答不足",
+    body:
+      "部分维度因选择“与本人情况无关”较多，有效题目数量较少，相关维度分数和雷达图仅供参考。",
+  },
+  dimensionNoValidAnswers: {
+    title: "该维度有效作答不足",
+    body:
+      "该维度题目均被选择为“与本人情况无关”，暂无法形成有效维度分数。",
+  },
+};
+
 export const NARCISSISM_RISK_DISCLAIMER_COPY = {
   full:
     "本测评仅用于婚姻互动风险识别与自我梳理参考，不用于判断对方是否患有 NPD / 自恋型人格障碍，也不构成临床诊断、心理治疗建议或正式法律意见。测评结果受到作答时情绪状态、信息掌握程度和关系阶段影响。若您正在面临现实威胁、暴力控制、限制行动、自伤他伤威胁或其他紧急风险，请优先寻求现实支持、报警或咨询专业人士。",
