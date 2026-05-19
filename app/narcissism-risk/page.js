@@ -185,6 +185,8 @@ export default function NarcissismRiskPage() {
     return (
       <NarcissismRiskResultScreen
         scoringResult={scoringResult}
+        answers={answers}
+        questionOrder={questionOrder}
         onRestart={startTest}
       />
     );

@@ -1,3 +1,5 @@
+import { useRef, useState } from "react";
+import { toPng } from "html-to-image";
 import {
   NARCISSISM_RISK_DIMENSION_ORDER,
   NARCISSISM_RISK_DIMENSIONS,
@@ -9,7 +11,11 @@ import {
   NARCISSISM_RISK_LEVELS,
   NARCISSISM_RISK_VALIDITY_COPY,
 } from "../../data/narcissismRiskResultCopy.js";
+import { buildNarcissismRiskSubmissionPayload } from "../../lib/buildNarcissismRiskSubmissionPayload.js";
+import { supabase } from "../../lib/supabaseClient.js";
+import NarcissismRiskLeadCapturePanel from "./NarcissismRiskLeadCapturePanel.js";
 import NarcissismRiskRadarChart from "./NarcissismRiskRadarChart.js";
+import NarcissismRiskSimpleResultExportCard from "./NarcissismRiskSimpleResultExportCard.js";
 import styles from "./narcissismRisk.module.css";
 
 const RESULT_HERO_CLASS = {
@@ -58,7 +64,35 @@ function getDimensionValidityNotice(dimensionDetails) {
   };
 }
 
-export default function NarcissismRiskResultScreen({ scoringResult, onRestart }) {
+export default function NarcissismRiskResultScreen({
+  scoringResult,
+  answers,
+  questionOrder,
+  onRestart,
+}) {
+  const exportCardRef = useRef(null);
+  const submitLockRef = useRef(false);
+  const [isLeadPanelOpen, setIsLeadPanelOpen] = useState(false);
+  const [contactForm, setContactForm] = useState({
+    contact_name: "",
+    contact_phone: "",
+    contact_wechat: "",
+  });
+  const [contactFeedback, setContactFeedback] = useState({
+    type: null,
+    message: "",
+  });
+  const [submitStatus, setSubmitStatus] = useState("idle");
+  const [submitFeedback, setSubmitFeedback] = useState({
+    type: null,
+    message: "",
+  });
+  const [exportStatus, setExportStatus] = useState("idle");
+  const [exportFeedback, setExportFeedback] = useState({
+    type: null,
+    message: "",
+  });
+
   const levelCopy = NARCISSISM_RISK_LEVELS.find(
     (item) => item.level === scoringResult.result_level
   );
@@ -76,120 +110,283 @@ export default function NarcissismRiskResultScreen({ scoringResult, onRestart })
     detail: scoringResult.dimension_details?.[code],
   }));
 
+  const handleContactFieldChange = (field, value) => {
+    setContactForm((previousForm) => ({
+      ...previousForm,
+      [field]: value,
+    }));
+    if (contactFeedback.type) {
+      setContactFeedback({
+        type: null,
+        message: "",
+      });
+    }
+  };
+
+  const handleSubmitLead = async () => {
+    if (
+      submitLockRef.current ||
+      submitStatus === "submitting" ||
+      submitStatus === "success"
+    ) {
+      return;
+    }
+
+    const contact = {
+      contact_name: contactForm.contact_name.trim(),
+      contact_phone: contactForm.contact_phone.trim(),
+      contact_wechat: contactForm.contact_wechat.trim(),
+    };
+
+    if (!contact.contact_name) {
+      setContactFeedback({
+        type: "error",
+        message: "请填写称呼。",
+      });
+      return;
+    }
+
+    if (!contact.contact_phone) {
+      setContactFeedback({
+        type: "error",
+        message: "请填写联系电话。",
+      });
+      return;
+    }
+
+    submitLockRef.current = true;
+    setSubmitStatus("submitting");
+    setContactFeedback({
+      type: null,
+      message: "",
+    });
+    setSubmitFeedback({
+      type: null,
+      message: "",
+    });
+
+    try {
+      const payload = buildNarcissismRiskSubmissionPayload({
+        scoringResult,
+        contact,
+        answers,
+        questionOrder,
+      });
+
+      const { error } = await supabase.from("assessment_results").insert(payload);
+
+      if (error) {
+        throw error;
+      }
+
+      setContactForm(contact);
+      setSubmitStatus("success");
+      setSubmitFeedback({
+        type: "success",
+        message:
+          "您的测评结果已成功提交。后续可结合您的具体情况，进一步梳理风险、证据与行动顺序。",
+      });
+    } catch (error) {
+      console.error("Failed to submit narcissism risk result:", error);
+      setSubmitStatus("error");
+      setSubmitFeedback({
+        type: "error",
+        message:
+          "提交失败，请检查网络后重试。如多次失败，您可以先截图保存当前结果。",
+      });
+    } finally {
+      submitLockRef.current = false;
+    }
+  };
+
+  const handleExportSimpleResultImage = async () => {
+    if (exportStatus === "exporting") return;
+
+    if (!exportCardRef.current) {
+      setExportStatus("error");
+      setExportFeedback({
+        type: "error",
+        message: "结果图生成失败，请稍后重试，或先截图保存当前页面。",
+      });
+      return;
+    }
+
+    setExportStatus("exporting");
+    setExportFeedback({
+      type: null,
+      message: "",
+    });
+
+    try {
+      const dataUrl = await toPng(exportCardRef.current, {
+        cacheBust: true,
+        pixelRatio: 2,
+        backgroundColor: "#ffffff",
+      });
+
+      const link = document.createElement("a");
+      link.download = `narcissism-risk-result-${scoringResult.result_level}-${Date.now()}.png`;
+      link.href = dataUrl;
+      link.click();
+      setExportStatus("idle");
+    } catch (error) {
+      console.error("Failed to export narcissism risk result image:", error);
+      setExportStatus("error");
+      setExportFeedback({
+        type: "error",
+        message: "结果图生成失败，请稍后重试，或先截图保存当前页面。",
+      });
+    }
+  };
+
   return (
     <main className={styles.pageShell}>
       <div className={styles.pageFrame}>
-        <section className={styles.resultLayout}>
-          <div
-            className={`${styles.resultHero} ${
-              RESULT_HERO_CLASS[scoringResult.result_level] ?? ""
-            }`}
-          >
-            <div className={styles.resultTopline}>
-              <span className={`${styles.topLabel} ${styles.resultTopLabel}`}>
-                配偶高自恋特质与高冲突婚姻风险自测结果
-              </span>
-              <span
-                className={`${styles.riskBadge} ${
-                  RISK_BADGE_CLASS[scoringResult.result_level] ?? ""
-                }`}
-              >
-                {scoringResult.result_label}
-              </span>
-            </div>
-            <h1>{levelCopy?.shortLabel ?? scoringResult.result_label}</h1>
-            <p className={styles.resultSummary}>
-              {levelCopy?.summary ?? "本次测评结果已生成，请结合现实事件理解。"}
-            </p>
-
-            <div className={styles.metricGrid}>
-              <div className={styles.metricItem}>
-                <span>总平均分</span>
-                <strong>{formatScore(scoringResult.average_score)} / 5</strong>
-              </div>
-              <div className={styles.metricItem}>
-                <span>总分 / 动态满分</span>
-                <strong>
-                  {scoringResult.total_score} / {scoringResult.dynamic_full_score}
-                </strong>
-              </div>
-              <div className={styles.metricItem}>
-                <span>有效作答</span>
-                <strong>
-                  {scoringResult.valid_answer_count} / {NARCISSISM_RISK_QUESTION_COUNT}
-                </strong>
-              </div>
-              <div className={styles.metricItem}>
-                <span>高风险触发</span>
-                <strong>{scoringResult.high_risk_triggered ? "是" : "否"}</strong>
-              </div>
-            </div>
-
-            <p className={styles.directionText}>
-              分数越高，代表相关高自恋互动特征与高冲突风险信号越明显。
-              {hasNaAnswers
-                ? ` 选择“与本人情况无关”的题目不计入总分和动态满分，本次共 ${scoringResult.na_answer_count} 题。`
-                : ""}
-            </p>
-          </div>
-
-          <div className={styles.sectionPanel}>
-            <h2 className={styles.sectionTitle}>五维雷达图</h2>
-            <p className={styles.bodyText}>
-              雷达图用于呈现五类风险信号的相对分布。分数越高，代表该维度相关风险信号越明显；如某维度有效作答不足，雷达图仅供参考。
-            </p>
-            <div className={styles.radarWrap}>
-              <NarcissismRiskRadarChart dimensions={radarDimensions} />
-            </div>
-            {dimensionValidityNotice && (
-              <p className={styles.inlineValidityText}>
-                部分维度有效作答不足，雷达图仅供参考。
-              </p>
-            )}
-          </div>
-
-          {scoringResult.low_validity && (
-            <div className={styles.validityCard}>
-              <h2>{NARCISSISM_RISK_VALIDITY_COPY.lowValidity.title}</h2>
-              <p>{NARCISSISM_RISK_VALIDITY_COPY.lowValidity.body}</p>
-            </div>
-          )}
-
-          {dimensionValidityNotice && (
+        <section className={styles.resultContainer}>
+          <div className={styles.resultLayout}>
             <div
-              className={`${styles.validityCard} ${
-                dimensionValidityNotice.hasNoValidAnswers
-                  ? styles.validityCardStrong
-                  : ""
+              className={`${styles.resultHero} ${
+                RESULT_HERO_CLASS[scoringResult.result_level] ?? ""
               }`}
             >
-              <h2>{dimensionValidityNotice.title}</h2>
-              <p>{dimensionValidityNotice.body}</p>
-              <p className={styles.validityMeta}>
-                有效作答不足维度：{dimensionValidityNotice.affectedDimensionNames}
+              <div className={styles.resultTopline}>
+                <span className={`${styles.topLabel} ${styles.resultTopLabel}`}>
+                  配偶高自恋特质与高冲突婚姻风险自测结果
+                </span>
+                <span
+                  className={`${styles.riskBadge} ${
+                    RISK_BADGE_CLASS[scoringResult.result_level] ?? ""
+                  }`}
+                >
+                  {scoringResult.result_label}
+                </span>
+              </div>
+              <h1>{levelCopy?.shortLabel ?? scoringResult.result_label}</h1>
+              <p className={styles.resultSummary}>
+                {levelCopy?.summary ?? "本次测评结果已生成，请结合现实事件理解。"}
+              </p>
+
+              <div className={styles.metricGrid}>
+                <div className={styles.metricItem}>
+                  <span>总平均分</span>
+                  <strong>{formatScore(scoringResult.average_score)} / 5</strong>
+                </div>
+                <div className={styles.metricItem}>
+                  <span>总分 / 动态满分</span>
+                  <strong>
+                    {scoringResult.total_score} / {scoringResult.dynamic_full_score}
+                  </strong>
+                </div>
+                <div className={styles.metricItem}>
+                  <span>有效作答</span>
+                  <strong>
+                    {scoringResult.valid_answer_count} /{" "}
+                    {NARCISSISM_RISK_QUESTION_COUNT}
+                  </strong>
+                </div>
+                <div className={styles.metricItem}>
+                  <span>与本人情况无关</span>
+                  <strong>{scoringResult.na_answer_count}</strong>
+                </div>
+                <div className={styles.metricItem}>
+                  <span>高风险触发</span>
+                  <strong>{scoringResult.high_risk_triggered ? "是" : "否"}</strong>
+                </div>
+              </div>
+
+              <p className={styles.directionText}>
+                分数越高，代表相关高自恋互动特征与高冲突风险信号越明显。
+                {hasNaAnswers
+                  ? ` 选择“与本人情况无关”的题目不计入总分和动态满分，本次共 ${scoringResult.na_answer_count} 题。`
+                  : ""}
               </p>
             </div>
-          )}
 
-          {scoringResult.high_risk_triggered && (
-            <div className={`${styles.riskCard} ${styles.riskCardTriggered}`}>
-              <h2>{highRiskCopy.title}</h2>
-              <p>{highRiskCopy.body}</p>
-              {highRiskCopy.footer && (
-                <p className={styles.riskFooter}>{highRiskCopy.footer}</p>
-              )}
+            {scoringResult.high_risk_triggered && (
+              <div className={`${styles.riskCard} ${styles.riskCardTriggered}`}>
+                <h2>安全风险提示</h2>
+                <p>{highRiskCopy.body}</p>
+                {highRiskCopy.footer && (
+                  <p className={styles.riskFooter}>{highRiskCopy.footer}</p>
+                )}
+              </div>
+            )}
+
+            <div className={styles.resultMainGrid}>
+              <div className={styles.sectionPanel}>
+                <h2 className={styles.sectionTitle}>五维雷达图</h2>
+                <p className={styles.bodyText}>
+                  雷达图用于呈现五类风险信号的相对分布。分数越高，代表该维度相关风险信号越明显；如某维度有效作答不足，雷达图仅供参考。
+                </p>
+                <div className={styles.radarWrap}>
+                  <NarcissismRiskRadarChart dimensions={radarDimensions} />
+                </div>
+                {scoringResult.low_validity && (
+                  <div className={styles.inlineValidityText}>
+                    <strong>{NARCISSISM_RISK_VALIDITY_COPY.lowValidity.title}</strong>
+                    <span>{NARCISSISM_RISK_VALIDITY_COPY.lowValidity.body}</span>
+                  </div>
+                )}
+                {dimensionValidityNotice && (
+                  <div
+                    className={`${styles.inlineValidityText} ${
+                      dimensionValidityNotice.hasNoValidAnswers
+                        ? styles.inlineValidityTextStrong
+                        : ""
+                    }`}
+                  >
+                    <strong>{dimensionValidityNotice.title}</strong>
+                    <span>{dimensionValidityNotice.body}</span>
+                    <span>
+                      有效作答不足维度：
+                      {dimensionValidityNotice.affectedDimensionNames}
+                    </span>
+                  </div>
+                )}
+                <div className={styles.radarActions}>
+                  <button
+                    type="button"
+                    className={styles.secondaryButton}
+                    onClick={handleExportSimpleResultImage}
+                    disabled={exportStatus === "exporting"}
+                  >
+                    {exportStatus === "exporting"
+                      ? "正在生成..."
+                      : "下载简版测评结果"}
+                  </button>
+                  {exportFeedback?.type === "error" && (
+                    <p className={`${styles.formFeedback} ${styles.formFeedbackError}`}>
+                      {exportFeedback.message}
+                    </p>
+                  )}
+                </div>
+              </div>
+
+              <NarcissismRiskLeadCapturePanel
+                isOpen={isLeadPanelOpen}
+                contactForm={contactForm}
+                contactFeedback={contactFeedback}
+                submitStatus={submitStatus}
+                submitFeedback={submitFeedback}
+                onOpen={() => setIsLeadPanelOpen(true)}
+                onSubmit={handleSubmitLead}
+                onRestart={onRestart}
+                onContactFieldChange={handleContactFieldChange}
+              />
             </div>
-          )}
 
-          <div className={styles.resultActionPanel}>
-            <button type="button" className={styles.secondaryButton} onClick={onRestart}>
-              重新测评
-            </button>
-          </div>
+            <div className={styles.disclaimerPanel}>
+              <h2>免责声明</h2>
+              <p>{NARCISSISM_RISK_DISCLAIMER_COPY.full}</p>
+            </div>
 
-          <div className={styles.disclaimerPanel}>
-            <h2>免责声明</h2>
-            <p>{NARCISSISM_RISK_DISCLAIMER_COPY.full}</p>
+            <div className={styles.exportHiddenWrap} aria-hidden="true">
+              <div ref={exportCardRef} className={styles.exportCaptureTarget}>
+                <NarcissismRiskSimpleResultExportCard
+                  scoringResult={scoringResult}
+                />
+              </div>
+            </div>
           </div>
         </section>
       </div>

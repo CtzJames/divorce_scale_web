@@ -6,6 +6,10 @@ const CENTER = CHART_SIZE / 2;
 const MAX_RADIUS = 112;
 const LABEL_RADIUS = 142;
 const GRID_LEVELS = [0.2, 0.4, 0.6, 0.8, 1];
+const RADAR_GRID_COLOR = "#e5e7eb";
+const RADAR_AREA_COLOR = "#475569";
+const RADAR_STROKE_COLOR = "#334155";
+const RADAR_LABEL_COLOR = "#374151";
 
 function getPointByRatio(angle, ratio) {
   const radius = MAX_RADIUS * ratio;
@@ -61,6 +65,8 @@ export default function NarcissismRiskRadarChart({ dimensions = [] }) {
               className={styles.radarGrid}
               points={getPolygonPoints(angles, level)}
               fill="none"
+              stroke={RADAR_GRID_COLOR}
+              strokeWidth="1"
             />
           ))}
 
@@ -74,11 +80,20 @@ export default function NarcissismRiskRadarChart({ dimensions = [] }) {
                 y1={CENTER}
                 x2={end.x}
                 y2={end.y}
+                stroke={RADAR_GRID_COLOR}
+                strokeWidth="1"
               />
             );
           })}
 
-          <polygon className={styles.radarArea} points={areaPoints} />
+          <polygon
+            className={styles.radarArea}
+            points={areaPoints}
+            fill={RADAR_AREA_COLOR}
+            fillOpacity="0.16"
+            stroke={RADAR_STROKE_COLOR}
+            strokeWidth="2"
+          />
 
           {dataPoints.map((point) => (
             <circle
@@ -87,6 +102,7 @@ export default function NarcissismRiskRadarChart({ dimensions = [] }) {
               cx={point.x}
               cy={point.y}
               r="4"
+              fill={RADAR_STROKE_COLOR}
             />
           ))}
 
@@ -98,6 +114,10 @@ export default function NarcissismRiskRadarChart({ dimensions = [] }) {
                 className={styles.radarLabel}
                 x={labelPoint.x}
                 y={labelPoint.y}
+                fill={RADAR_LABEL_COLOR}
+                fontSize="13"
+                fontWeight="800"
+                fontFamily="Arial, sans-serif"
                 textAnchor="middle"
                 dominantBaseline="middle"
               >
