@@ -722,10 +722,7 @@
 
 .leadFormBlock {
   margin-top: 18px;
-  border: 1px solid #e5e7eb;
-  border-radius: 18px;
-  background: #f9fafb;
-  padding: 18px;
+  padding: 0;
 }
 
 .leadFormIntro {
@@ -752,7 +749,8 @@
   line-height: 1.4;
 }
 
-.leadFormField input {
+.leadFormField input,
+.leadFormField select {
   width: 100%;
   min-width: 0;
   min-height: 46px;
@@ -765,9 +763,22 @@
   padding: 11px 12px;
 }
 
-.leadFormField input:disabled {
+.leadFormField select {
+  appearance: auto;
+}
+
+.leadFormField input:disabled,
+.leadFormField select:disabled {
   color: #6b7280;
   background: #f3f4f6;
+}
+
+.formHint {
+  margin: 12px 0 0;
+  color: #6b7280;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.6;
 }
 
 .exportTip {
@@ -796,6 +807,63 @@
 
 .formFeedbackError {
   color: #9f2d20;
+}
+
+.successModalOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: grid;
+  place-items: center;
+  background: rgba(17, 24, 39, 0.48);
+  padding: 20px;
+}
+
+.successModalDialog {
+  width: min(100%, 440px);
+  max-height: calc(100vh - 40px);
+  overflow: auto;
+  border: 1px solid #e5e7eb;
+  border-radius: 24px;
+  background: #ffffff;
+  box-shadow: 0 24px 72px rgba(17, 24, 39, 0.22);
+  padding: 26px;
+}
+
+.successModalDialog h2 {
+  margin: 0;
+  color: #1f2933;
+  font-size: 24px;
+  line-height: 1.35;
+}
+
+.successModalDialog p {
+  margin: 12px 0 0;
+  color: #374151;
+  font-size: 15px;
+  line-height: 1.85;
+}
+
+.successModalDialog button {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.successModalQrPanel {
+  display: grid;
+  justify-items: center;
+  margin-top: 18px;
+  border: 1px solid #e5e7eb;
+  border-radius: 18px;
+  background: #f9fafb;
+  padding: 16px;
+}
+
+.successModalQrPanel img {
+  display: block;
+  width: min(100%, 220px);
+  height: auto;
+  border-radius: 12px;
 }
 
 .disclaimerPanel {
@@ -1216,5 +1284,10 @@
 
   .leadActions button {
     width: 100%;
+  }
+
+  .successModalDialog {
+    border-radius: 20px;
+    padding: 22px;
   }
 }

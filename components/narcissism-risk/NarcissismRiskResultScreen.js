@@ -11,7 +11,12 @@ import {
   NARCISSISM_RISK_LEVELS,
   NARCISSISM_RISK_VALIDITY_COPY,
 } from "../../data/narcissismRiskResultCopy.js";
-import { buildNarcissismRiskSubmissionPayload } from "../../lib/buildNarcissismRiskSubmissionPayload.js";
+import { WECOM_ASSISTANT_QR_PATH } from "../../data/resultPageConfig.js";
+import {
+  NARCISSISM_RISK_SERVICE_INTENT_OPTIONS,
+  buildNarcissismRiskSubmissionPayload,
+  resolveNarcissismRiskServiceIntent,
+} from "../../lib/buildNarcissismRiskSubmissionPayload.js";
 import { supabase } from "../../lib/supabaseClient.js";
 import NarcissismRiskLeadCapturePanel from "./NarcissismRiskLeadCapturePanel.js";
 import NarcissismRiskRadarChart from "./NarcissismRiskRadarChart.js";
@@ -34,6 +39,36 @@ const RISK_BADGE_CLASS = {
 
 function formatScore(value) {
   return Number.isFinite(value) ? value.toFixed(2) : "0.00";
+}
+
+function NarcissismRiskSubmitSuccessModal({ serviceIntent, onClose }) {
+  const isDeepReport = serviceIntent === "deep_report";
+
+  return (
+    <div className={styles.successModalOverlay}>
+      <div
+        className={styles.successModalDialog}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="narcissism-risk-submit-success-title"
+      >
+        <h2 id="narcissism-risk-submit-success-title">提交成功</h2>
+        <p>
+          {isDeepReport
+            ? "您的测评结果已成功提交。请添加小助理微信，获取您的测评结果深度分析报告。"
+            : "您的测评结果已成功提交。专业人员将在 3 个工作日内结合您的测评结果与具体情况联系您，请保持电话或微信畅通。"}
+        </p>
+        {isDeepReport && (
+          <div className={styles.successModalQrPanel}>
+            <img src={WECOM_ASSISTANT_QR_PATH} alt="小助理微信二维码" />
+          </div>
+        )}
+        <button type="button" className={styles.primaryButton} onClick={onClose}>
+          知道了
+        </button>
+      </div>
+    </div>
+  );
 }
 
 function getDimensionValidityNotice(dimensionDetails) {
@@ -72,7 +107,9 @@ export default function NarcissismRiskResultScreen({
 }) {
   const exportCardRef = useRef(null);
   const submitLockRef = useRef(false);
-  const [isLeadPanelOpen, setIsLeadPanelOpen] = useState(false);
+  const [serviceIntent, setServiceIntent] = useState("professional_support");
+  const [submittedServiceIntent, setSubmittedServiceIntent] = useState(null);
+  const [isSubmitSuccessModalOpen, setIsSubmitSuccessModalOpen] = useState(false);
   const [contactForm, setContactForm] = useState({
     contact_name: "",
     contact_phone: "",
@@ -110,13 +147,40 @@ export default function NarcissismRiskResultScreen({
     detail: scoringResult.dimension_details?.[code],
   }));
 
+  const handleServiceIntentChange = (value) => {
+    if (submitStatus === "submitting" || submitStatus === "success") return;
+
+    const resolvedIntent = resolveNarcissismRiskServiceIntent(value);
+    setServiceIntent(resolvedIntent.value);
+    if (contactFeedback.type) {
+      setContactFeedback({
+        type: null,
+        message: "",
+      });
+    }
+    if (submitFeedback.type) {
+      setSubmitFeedback({
+        type: null,
+        message: "",
+      });
+    }
+  };
+
   const handleContactFieldChange = (field, value) => {
+    if (submitStatus === "success") return;
+
     setContactForm((previousForm) => ({
       ...previousForm,
       [field]: value,
     }));
     if (contactFeedback.type) {
       setContactFeedback({
+        type: null,
+        message: "",
+      });
+    }
+    if (submitFeedback.type) {
+      setSubmitFeedback({
         type: null,
         message: "",
       });
@@ -137,6 +201,7 @@ export default function NarcissismRiskResultScreen({
       contact_phone: contactForm.contact_phone.trim(),
       contact_wechat: contactForm.contact_wechat.trim(),
     };
+    const resolvedServiceIntent = resolveNarcissismRiskServiceIntent(serviceIntent);
 
     if (!contact.contact_name) {
       setContactFeedback({
@@ -169,6 +234,7 @@ export default function NarcissismRiskResultScreen({
       const payload = buildNarcissismRiskSubmissionPayload({
         scoringResult,
         contact,
+        serviceIntent: resolvedServiceIntent.value,
         answers,
         questionOrder,
       });
@@ -180,11 +246,13 @@ export default function NarcissismRiskResultScreen({
       }
 
       setContactForm(contact);
+      setServiceIntent(resolvedServiceIntent.value);
+      setSubmittedServiceIntent(resolvedServiceIntent.value);
       setSubmitStatus("success");
+      setIsSubmitSuccessModalOpen(true);
       setSubmitFeedback({
         type: "success",
-        message:
-          "您的测评结果已成功提交。后续可结合您的具体情况，进一步梳理风险、证据与行动顺序。",
+        message: "信息已提交成功。",
       });
     } catch (error) {
       console.error("Failed to submit narcissism risk result:", error);
@@ -363,17 +431,25 @@ export default function NarcissismRiskResultScreen({
               </div>
 
               <NarcissismRiskLeadCapturePanel
-                isOpen={isLeadPanelOpen}
+                serviceIntent={serviceIntent}
+                serviceIntentOptions={NARCISSISM_RISK_SERVICE_INTENT_OPTIONS}
                 contactForm={contactForm}
                 contactFeedback={contactFeedback}
                 submitStatus={submitStatus}
                 submitFeedback={submitFeedback}
-                onOpen={() => setIsLeadPanelOpen(true)}
+                onServiceIntentChange={handleServiceIntentChange}
                 onSubmit={handleSubmitLead}
                 onRestart={onRestart}
                 onContactFieldChange={handleContactFieldChange}
               />
             </div>
+
+            {isSubmitSuccessModalOpen && (
+              <NarcissismRiskSubmitSuccessModal
+                serviceIntent={submittedServiceIntent ?? serviceIntent}
+                onClose={() => setIsSubmitSuccessModalOpen(false)}
+              />
+            )}
 
             <div className={styles.disclaimerPanel}>
               <h2>免责声明</h2>
