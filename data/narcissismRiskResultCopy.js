@@ -3,7 +3,7 @@ export const NARCISSISM_RISK_LEVELS = [
     level: "low",
     label: "低风险",
     min: 1,
-    max: 1.8,
+    max: 1.99,
     shortLabel: "当前高冲突风险信号较弱",
     summary:
       "您的作答显示，当前关系中与高自恋互动、高冲突升级相关的风险信号整体较弱。低风险不代表关系中完全没有问题，也不代表未来不会发生冲突；若已经处于分居、离婚协商、财产分割或子女安排阶段，仍建议结合现实情况保存关键沟通记录，并在涉及重大权益时咨询专业人士。",
@@ -11,8 +11,8 @@ export const NARCISSISM_RISK_LEVELS = [
   {
     level: "mild",
     label: "轻度风险",
-    min: 1.81,
-    max: 2.6,
+    min: 2,
+    max: 2.99,
     shortLabel: "部分互动模式值得留意",
     summary:
       "您的作答显示，当前关系中已经出现一些与高自恋互动或高冲突婚姻相关的风险信号。这不意味着对方存在人格障碍，也不意味着关系必然恶化；它提示您在继续沟通、协商或推进离婚相关事项时，需要更重视边界、证据和沟通方式。",
@@ -20,8 +20,8 @@ export const NARCISSISM_RISK_LEVELS = [
   {
     level: "moderate",
     label: "中度风险",
-    min: 2.61,
-    max: 3.4,
+    min: 3,
+    max: 3.5,
     shortLabel: "风险信号已较明显",
     summary:
       "您的作答显示，当前关系中与高自恋互动、高冲突升级相关的风险信号已经较为明显。单纯依靠反复沟通或情绪化争辩，可能难以真正降低冲突；建议优先梳理关键事实、保存重要证据、减少无准备的正面冲突，并在涉及财产、子女、分居、离婚协商或安全风险时尽早咨询专业人士。",
@@ -29,7 +29,7 @@ export const NARCISSISM_RISK_LEVELS = [
   {
     level: "high",
     label: "高风险",
-    min: 3.41,
+    min: 3.51,
     max: 5,
     shortLabel: "建议优先关注安全与专业支持",
     summary:
@@ -41,7 +41,7 @@ export const NARCISSISM_RISK_RESULT_LEVELS = NARCISSISM_RISK_LEVELS;
 
 export const NARCISSISM_RISK_DIMENSION_COPY = {
   N1: {
-    title: "自我重要感与特权感",
+    title: "自我中心与关系特权",
     description:
       "该维度用于观察对方在婚姻关系中是否长期表现出过度自我中心、优越感、特殊待遇期待、规则例外心态，以及在家庭决策、资源分配和子女安排中要求更大话语权的倾向。",
     highScoreMeaning:
@@ -52,7 +52,7 @@ export const NARCISSISM_RISK_DIMENSION_COPY = {
       "对方在关系中的特权感、单方主导和优先权期待，是当前需要关注的风险来源之一。",
   },
   N2: {
-    title: "赞赏依赖与羞耻暴怒",
+    title: "人设包装与反应升级",
     description:
       "该维度用于观察对方是否高度依赖外界认同，在被质疑、被否定、被指出问题或没有占上风时，出现明显羞耻、受伤、愤怒、攻击、防御或报复性表达。",
     highScoreMeaning:
@@ -63,7 +63,7 @@ export const NARCISSISM_RISK_DIMENSION_COPY = {
       "对方被质疑、被否定或感到失去优势时的反应，可能是冲突升级的重要触发点。",
   },
   N3: {
-    title: "共情缺损与责任外归因",
+    title: "情感忽视与责任推脱",
     description:
       "该维度用于观察对方是否难以理解、承认或回应您和孩子的真实感受，是否倾向于否认伤害、淡化痛苦、贬低情绪，并将婚姻问题主要归咎于您、您的家人或外部环境。",
     highScoreMeaning:
@@ -74,7 +74,7 @@ export const NARCISSISM_RISK_DIMENSION_COPY = {
       "对方是否能承认您的感受、边界与受到的伤害，是判断关系能否理性协商的重要基础。",
   },
   N4: {
-    title: "操控剥削与第三方动员",
+    title: "控制施压与关系操控",
     description:
       "该维度用于观察对方是否通过经济压力、情绪施压、道德指责、信息控制、叙事塑造、亲友或孩子卷入等方式影响您，使您在冲突或协商中承受不对等压力。",
     highScoreMeaning:
@@ -85,7 +85,7 @@ export const NARCISSISM_RISK_DIMENSION_COPY = {
       "如果冲突中存在叙事控制、第三方卷入或让您不断自我怀疑的情况，应优先保存事实材料并减少被动应对。",
   },
   N5: {
-    title: "高冲突升级与安全风险",
+    title: "冲突升级与安全风险",
     description:
       "该维度用于观察对方在婚姻危机、分居、协商或离婚过程中，是否存在猜疑、报复、持续骚扰、威胁恐吓、隐私公开、财物破坏、限制行动、自伤他伤威胁、程序性消耗或诱导情绪失控等风险。",
     highScoreMeaning:

@@ -17,9 +17,9 @@ function formatDimensionScore(value) {
 
 function getDimensionRiskLevel(score) {
   if (!Number.isFinite(score)) return "invalid";
-  if (score > 3.4) return "high";
-  if (score > 2.6) return "moderate";
-  if (score > 1.8) return "mild";
+  if (score > 3.5) return "high";
+  if (score >= 3) return "moderate";
+  if (score >= 2) return "mild";
   return "low";
 }
 

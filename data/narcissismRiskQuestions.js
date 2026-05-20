@@ -5,27 +5,27 @@ export const NARCISSISM_RISK_DIMENSION_ORDER = ["N1", "N2", "N3", "N4", "N5"];
 export const NARCISSISM_RISK_DIMENSIONS = {
   N1: {
     code: "N1",
-    name: "自我重要感与特权感",
+    name: "自我中心与关系特权",
     shortName: "自我中心",
   },
   N2: {
     code: "N2",
-    name: "赞赏依赖与羞耻暴怒",
+    name: "人设包装与反应升级",
     shortName: "受挫反应",
   },
   N3: {
     code: "N3",
-    name: "共情缺损与责任外归因",
+    name: "情感忽视与责任推脱",
     shortName: "情感回应",
   },
   N4: {
     code: "N4",
-    name: "操控剥削与第三方动员",
+    name: "控制施压与关系操控",
     shortName: "关系施压",
   },
   N5: {
     code: "N5",
-    name: "高冲突升级与安全风险",
+    name: "冲突升级与安全风险",
     shortName: "冲突升级",
   },
 };
