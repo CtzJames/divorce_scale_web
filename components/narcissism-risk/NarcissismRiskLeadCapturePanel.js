@@ -20,8 +20,13 @@ export default function NarcissismRiskLeadCapturePanel({
 }) {
   const isSubmitting = submitStatus === "submitting";
   const hasSubmitted = submitStatus === "success";
+  const hasSelectedServiceIntent = serviceIntentOptions.some(
+    (item) => item.value === serviceIntent
+  );
   const canSubmit = Boolean(
-    contactForm.contact_name.trim() && contactForm.contact_phone.trim()
+    hasSelectedServiceIntent &&
+      contactForm.contact_name.trim() &&
+      contactForm.contact_phone.trim()
   );
 
   return (
@@ -30,7 +35,7 @@ export default function NarcissismRiskLeadCapturePanel({
         <div>
           <h2>获取后续支持</h2>
           <p>
-            如果您正在经历来自伴侣的长期否定、操控、威胁、骚扰，或已经进入分居、离婚协商、财产分割、子女安排等阶段，希望获取深度测评报告或专业人士支持，可以留下您的联系方式，并选择您希望获得的后续服务类型。我们将根据您的测评结果与选择，为您提供相应的后续服务。
+            如果您正在经历来自伴侣的长期否定、操控、威胁、骚扰，或已经进入分居、离婚协商、财产分割、子女安排等阶段，希望获取深度分析报告、法律支持或心理支持，可以留下您的联系方式，并选择您希望获得的后续服务类型。我们将根据您的测评结果与选择，为您提供相应的后续服务。
           </p>
         </div>
       </div>
@@ -44,6 +49,9 @@ export default function NarcissismRiskLeadCapturePanel({
               onChange={(event) => onServiceIntentChange(event.target.value)}
               disabled={isSubmitting || hasSubmitted}
             >
+              <option value="" disabled>
+                请选择
+              </option>
               {serviceIntentOptions.map((item) => (
                 <option key={item.value} value={item.value}>
                   {item.label}
@@ -89,7 +97,9 @@ export default function NarcissismRiskLeadCapturePanel({
           </label>
         </div>
         {!hasSubmitted && !isSubmitting && !canSubmit && (
-          <p className={styles.formHint}>请填写称呼和联系电话后提交。</p>
+          <p className={styles.formHint}>
+            请选择服务类型，并填写称呼和联系电话后提交。
+          </p>
         )}
         {contactFeedback?.type === "error" && (
           <p className={`${styles.formFeedback} ${styles.formFeedbackError}`}>

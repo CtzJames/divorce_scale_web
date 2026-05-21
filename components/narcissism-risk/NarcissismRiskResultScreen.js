@@ -43,6 +43,12 @@ function formatScore(value) {
 
 function NarcissismRiskSubmitSuccessModal({ serviceIntent, onClose }) {
   const isDeepReport = serviceIntent === "deep_report";
+  const successMessage =
+    serviceIntent === "legal_support"
+      ? "您的测评结果已成功提交。工作人员会根据您的个人情况为您匹配专业法律顾问，并于3个工作日内联系您，请留意微信好友申请或保持电话畅通。"
+      : serviceIntent === "psychological_support"
+        ? "您的测评结果已成功提交。工作人员会根据您的个人情况为您匹配专业心理支持人员，并于3个工作日内联系您，请留意微信好友申请或保持电话畅通。"
+        : "您的测评结果已成功提交。请添加小助理微信，获取您的测评结果深度分析报告。";
 
   return (
     <div className={styles.successModalOverlay}>
@@ -53,11 +59,7 @@ function NarcissismRiskSubmitSuccessModal({ serviceIntent, onClose }) {
         aria-labelledby="narcissism-risk-submit-success-title"
       >
         <h2 id="narcissism-risk-submit-success-title">提交成功</h2>
-        <p>
-          {isDeepReport
-            ? "您的测评结果已成功提交。请添加小助理微信，获取您的测评结果深度分析报告。"
-            : "您的测评结果已成功提交。专业人员将在 3 个工作日内结合您的测评结果与具体情况联系您，请保持电话或微信畅通。"}
-        </p>
+        <p>{successMessage}</p>
         {isDeepReport && (
           <div className={styles.successModalQrPanel}>
             <img src={WECOM_ASSISTANT_QR_PATH} alt="小助理微信二维码" />
@@ -107,7 +109,7 @@ export default function NarcissismRiskResultScreen({
 }) {
   const exportCardRef = useRef(null);
   const submitLockRef = useRef(false);
-  const [serviceIntent, setServiceIntent] = useState("professional_support");
+  const [serviceIntent, setServiceIntent] = useState("");
   const [submittedServiceIntent, setSubmittedServiceIntent] = useState(null);
   const [isSubmitSuccessModalOpen, setIsSubmitSuccessModalOpen] = useState(false);
   const [contactForm, setContactForm] = useState({
@@ -151,7 +153,7 @@ export default function NarcissismRiskResultScreen({
     if (submitStatus === "submitting" || submitStatus === "success") return;
 
     const resolvedIntent = resolveNarcissismRiskServiceIntent(value);
-    setServiceIntent(resolvedIntent.value);
+    setServiceIntent(resolvedIntent?.value ?? "");
     if (contactFeedback.type) {
       setContactFeedback({
         type: null,
@@ -202,6 +204,14 @@ export default function NarcissismRiskResultScreen({
       contact_wechat: contactForm.contact_wechat.trim(),
     };
     const resolvedServiceIntent = resolveNarcissismRiskServiceIntent(serviceIntent);
+
+    if (!resolvedServiceIntent) {
+      setContactFeedback({
+        type: "error",
+        message: "请选择服务类型。",
+      });
+      return;
+    }
 
     if (!contact.contact_name) {
       setContactFeedback({
