@@ -41,6 +41,24 @@ function formatScore(value) {
   return Number.isFinite(value) ? value.toFixed(2) : "0.00";
 }
 
+const CONTACT_NAME_PATTERN = /^[\u4e00-\u9fa5A-Za-z·\-\s]{2,30}$/;
+const CONTACT_PHONE_PATTERN = /^1[3-9]\d{9}$/;
+const CONTACT_NAME_ERROR_MESSAGE =
+  "请填写您的中文或英文称呼，需为 2–30 个字符，不能包含数字、符号或表情。";
+const CONTACT_PHONE_ERROR_MESSAGE =
+  "请填写中国大陆 11 位手机号，暂不支持座机、境外号码或带区号格式。";
+const FORM_INCOMPLETE_HINT =
+  "请选择服务类型，并填写有效的称呼和联系电话后提交。";
+const FORM_FIELD_ERROR_HINT = "请先修正上方标红的信息后再提交。";
+
+function validateContactName(value) {
+  return CONTACT_NAME_PATTERN.test(String(value ?? "").trim());
+}
+
+function validateContactPhone(value) {
+  return CONTACT_PHONE_PATTERN.test(String(value ?? "").trim());
+}
+
 function NarcissismRiskSubmitSuccessModal({ serviceIntent, onClose }) {
   const isDeepReport = serviceIntent === "deep_report";
   const successMessage =
@@ -117,6 +135,11 @@ export default function NarcissismRiskResultScreen({
     contact_phone: "",
     contact_wechat: "",
   });
+  const [contactTouched, setContactTouched] = useState({
+    contact_name: false,
+    contact_phone: false,
+  });
+  const [submitAttempted, setSubmitAttempted] = useState(false);
   const [contactFeedback, setContactFeedback] = useState({
     type: null,
     message: "",
@@ -149,6 +172,30 @@ export default function NarcissismRiskResultScreen({
     detail: scoringResult.dimension_details?.[code],
   }));
 
+  const isServiceIntentValid = Boolean(
+    resolveNarcissismRiskServiceIntent(serviceIntent)
+  );
+  const isContactNameValid = validateContactName(contactForm.contact_name);
+  const isContactPhoneValid = validateContactPhone(contactForm.contact_phone);
+  const canSubmitLead =
+    isServiceIntentValid && isContactNameValid && isContactPhoneValid;
+  const contactFieldErrors = {
+    contact_name:
+      (contactTouched.contact_name || submitAttempted) && !isContactNameValid
+        ? CONTACT_NAME_ERROR_MESSAGE
+        : "",
+    contact_phone:
+      (contactTouched.contact_phone || submitAttempted) && !isContactPhoneValid
+        ? CONTACT_PHONE_ERROR_MESSAGE
+        : "",
+  };
+  const hasVisibleContactFieldError = Boolean(
+    contactFieldErrors.contact_name || contactFieldErrors.contact_phone
+  );
+  const leadFormHintMessage = hasVisibleContactFieldError
+    ? FORM_FIELD_ERROR_HINT
+    : FORM_INCOMPLETE_HINT;
+
   const handleServiceIntentChange = (value) => {
     if (submitStatus === "submitting" || submitStatus === "success") return;
 
@@ -171,6 +218,13 @@ export default function NarcissismRiskResultScreen({
   const handleContactFieldChange = (field, value) => {
     if (submitStatus === "success") return;
 
+    if (field === "contact_name" || field === "contact_phone") {
+      setContactTouched((previousTouched) => ({
+        ...previousTouched,
+        [field]: true,
+      }));
+    }
+
     setContactForm((previousForm) => ({
       ...previousForm,
       [field]: value,
@@ -189,6 +243,15 @@ export default function NarcissismRiskResultScreen({
     }
   };
 
+  const handleContactFieldBlur = (field) => {
+    if (field !== "contact_name" && field !== "contact_phone") return;
+
+    setContactTouched((previousTouched) => ({
+      ...previousTouched,
+      [field]: true,
+    }));
+  };
+
   const handleSubmitLead = async () => {
     if (
       submitLockRef.current ||
@@ -198,6 +261,8 @@ export default function NarcissismRiskResultScreen({
       return;
     }
 
+    setSubmitAttempted(true);
+
     const contact = {
       contact_name: contactForm.contact_name.trim(),
       contact_phone: contactForm.contact_phone.trim(),
@@ -205,26 +270,14 @@ export default function NarcissismRiskResultScreen({
     };
     const resolvedServiceIntent = resolveNarcissismRiskServiceIntent(serviceIntent);
 
-    if (!resolvedServiceIntent) {
-      setContactFeedback({
-        type: "error",
-        message: "请选择服务类型。",
-      });
-      return;
-    }
-
-    if (!contact.contact_name) {
-      setContactFeedback({
-        type: "error",
-        message: "请填写称呼。",
-      });
-      return;
-    }
-
-    if (!contact.contact_phone) {
-      setContactFeedback({
-        type: "error",
-        message: "请填写联系电话。",
+    if (
+      !resolvedServiceIntent ||
+      !validateContactName(contact.contact_name) ||
+      !validateContactPhone(contact.contact_phone)
+    ) {
+      setContactTouched({
+        contact_name: true,
+        contact_phone: true,
       });
       return;
     }
@@ -444,13 +497,18 @@ export default function NarcissismRiskResultScreen({
                 serviceIntent={serviceIntent}
                 serviceIntentOptions={NARCISSISM_RISK_SERVICE_INTENT_OPTIONS}
                 contactForm={contactForm}
+                contactFieldErrors={contactFieldErrors}
                 contactFeedback={contactFeedback}
+                canSubmitLead={canSubmitLead}
+                formHintMessage={leadFormHintMessage}
+                formHintType={hasVisibleContactFieldError ? "error" : "neutral"}
                 submitStatus={submitStatus}
                 submitFeedback={submitFeedback}
                 onServiceIntentChange={handleServiceIntentChange}
                 onSubmit={handleSubmitLead}
                 onRestart={onRestart}
                 onContactFieldChange={handleContactFieldChange}
+                onContactFieldBlur={handleContactFieldBlur}
               />
             </div>
 

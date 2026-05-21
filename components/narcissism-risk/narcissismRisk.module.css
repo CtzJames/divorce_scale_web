@@ -773,12 +773,29 @@
   background: #f3f4f6;
 }
 
+.leadFormField input.fieldInputError {
+  border-color: #c2410c;
+  background: #fffafa;
+}
+
+.fieldError {
+  margin: -2px 0 0;
+  color: #9f2d20;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
 .formHint {
   margin: 12px 0 0;
   color: #6b7280;
   font-size: 13px;
   font-weight: 700;
   line-height: 1.6;
+}
+
+.formHintError {
+  color: #9f2d20;
 }
 
 .exportTip {

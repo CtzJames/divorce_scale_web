@@ -10,24 +10,22 @@ export default function NarcissismRiskLeadCapturePanel({
   serviceIntent,
   serviceIntentOptions,
   contactForm,
+  contactFieldErrors,
   contactFeedback,
+  canSubmitLead,
+  formHintMessage,
+  formHintType,
   submitStatus,
   submitFeedback,
   onServiceIntentChange,
   onSubmit,
   onRestart,
   onContactFieldChange,
+  onContactFieldBlur,
 }) {
   const isSubmitting = submitStatus === "submitting";
   const hasSubmitted = submitStatus === "success";
-  const hasSelectedServiceIntent = serviceIntentOptions.some(
-    (item) => item.value === serviceIntent
-  );
-  const canSubmit = Boolean(
-    hasSelectedServiceIntent &&
-      contactForm.contact_name.trim() &&
-      contactForm.contact_phone.trim()
-  );
+  const shouldShowFormHint = !hasSubmitted && !isSubmitting && !canSubmitLead;
 
   return (
     <section className={styles.leadPanel}>
@@ -64,24 +62,61 @@ export default function NarcissismRiskLeadCapturePanel({
             <input
               type="text"
               value={contactForm.contact_name}
+              className={
+                contactFieldErrors.contact_name ? styles.fieldInputError : ""
+              }
               onChange={(event) =>
                 onContactFieldChange("contact_name", event.target.value)
               }
+              onBlur={() => onContactFieldBlur("contact_name")}
               placeholder="请输入您的称呼"
               disabled={isSubmitting || hasSubmitted}
+              aria-invalid={Boolean(contactFieldErrors.contact_name)}
+              aria-describedby={
+                contactFieldErrors.contact_name
+                  ? "narcissism-risk-contact-name-error"
+                  : undefined
+              }
             />
+            {contactFieldErrors.contact_name && (
+              <p
+                id="narcissism-risk-contact-name-error"
+                className={styles.fieldError}
+              >
+                {contactFieldErrors.contact_name}
+              </p>
+            )}
           </label>
           <label className={styles.leadFormField}>
             <span>联系电话（必填）</span>
             <input
               type="tel"
               value={contactForm.contact_phone}
+              className={
+                contactFieldErrors.contact_phone ? styles.fieldInputError : ""
+              }
               onChange={(event) =>
                 onContactFieldChange("contact_phone", event.target.value)
               }
+              onBlur={() => onContactFieldBlur("contact_phone")}
               placeholder="请输入便于联系的手机号"
+              inputMode="numeric"
               disabled={isSubmitting || hasSubmitted}
+              aria-invalid={Boolean(contactFieldErrors.contact_phone)}
+              aria-describedby={
+                contactFieldErrors.contact_phone
+                  ? "narcissism-risk-contact-phone-error"
+                  : undefined
+              }
             />
+            {contactFieldErrors.contact_phone && (
+              <p
+                id="narcissism-risk-contact-phone-error"
+                className={styles.fieldError}
+              >
+                {contactFieldErrors.contact_phone}
+              </p>
+            )}
           </label>
           <label className={styles.leadFormField}>
             <span>微信号（选填）</span>
@@ -96,11 +131,6 @@ export default function NarcissismRiskLeadCapturePanel({
             />
           </label>
         </div>
-        {!hasSubmitted && !isSubmitting && !canSubmit && (
-          <p className={styles.formHint}>
-            请选择服务类型，并填写称呼和联系电话后提交。
-          </p>
-        )}
         {contactFeedback?.type === "error" && (
           <p className={`${styles.formFeedback} ${styles.formFeedbackError}`}>
             {contactFeedback.message}
@@ -113,7 +143,7 @@ export default function NarcissismRiskLeadCapturePanel({
           type="button"
           className={styles.primaryButton}
           onClick={onSubmit}
-          disabled={isSubmitting || hasSubmitted || !canSubmit}
+          disabled={isSubmitting || hasSubmitted || !canSubmitLead}
         >
           {getPrimaryButtonText(submitStatus)}
         </button>
@@ -121,6 +151,16 @@ export default function NarcissismRiskLeadCapturePanel({
           重新测评
         </button>
       </div>
+
+      {shouldShowFormHint && (
+        <p
+          className={`${styles.formHint} ${
+            formHintType === "error" ? styles.formHintError : ""
+          }`}
+        >
+          {formHintMessage}
+        </p>
+      )}
 
       {submitFeedback?.type && (
         <p
