@@ -3,6 +3,10 @@ import {
   RESULT_LEVEL_FILTER_OPTIONS,
   SERVICE_TYPE_OPTIONS,
 } from "../lib/constants";
+import {
+  ASSESSMENT_TYPE_FILTER_OPTIONS,
+  SERVICE_INTENT_FILTER_OPTIONS,
+} from "../lib/leadAssessment";
 
 function buildOptions(options) {
   return options.map((item) => (
@@ -50,6 +54,20 @@ export default function LeadsFilters({ filters }) {
             type="datetime-local"
             defaultValue={filters.createdTo}
           />
+        </label>
+
+        <label className="field">
+          <span>量表类型</span>
+          <select name="assessmentType" defaultValue={filters.assessmentType}>
+            {buildOptions(ASSESSMENT_TYPE_FILTER_OPTIONS)}
+          </select>
+        </label>
+
+        <label className="field">
+          <span>用户意向</span>
+          <select name="serviceIntent" defaultValue={filters.serviceIntent}>
+            {buildOptions(SERVICE_INTENT_FILTER_OPTIONS)}
+          </select>
         </label>
 
         <label className="field">

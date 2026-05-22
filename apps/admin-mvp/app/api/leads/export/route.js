@@ -16,14 +16,44 @@ import {
   getFollowUpStatusLabel,
   getResultLevelLabel,
 } from "../../../../lib/constants";
+import {
+  formatNarcissismAverageScore,
+  formatNarcissismHighRiskStatus,
+  formatNarcissismLowValidity,
+  getAssessmentTypeLabel,
+  getLeadServiceIntentLabel,
+  getNarcissismDimensionSummary,
+  getNarcissismHighRiskTriggerSummary,
+  getNarcissismNaAnswerCount,
+  getNarcissismResultLevelLabel,
+  getNarcissismValidAnswerCount,
+  isNarcissismRiskRecord,
+} from "../../../../lib/leadAssessment";
+
+function getLeadResultLabel(row) {
+  if (isNarcissismRiskRecord(row)) {
+    return row.result_label || getNarcissismResultLevelLabel(row.result_level);
+  }
+  return row.result_label || getResultLevelLabel(row.result_level);
+}
 
 const CSV_COLUMNS = [
   ["提交时间", (row) => formatDateTime(row.created_at)],
+  ["量表类型", (row) => getAssessmentTypeLabel(row)],
   ["姓名", (row) => row.contact_name],
   ["电话", (row) => row.contact_phone],
   ["微信", (row) => row.contact_wechat],
-  ["结果等级", (row) => row.result_label || getResultLevelLabel(row.result_level)],
+  ["用户意向", (row) => getLeadServiceIntentLabel(row)],
+  ["结果等级", (row) => getLeadResultLabel(row)],
   ["得分率", (row) => formatScoreRate(row.score_rate)],
+  ["新量表总平均分", (row) => formatNarcissismAverageScore(row, "")],
+  ["新量表有效作答数", (row) => getNarcissismValidAnswerCount(row)],
+  ["新量表NA数量", (row) => getNarcissismNaAnswerCount(row)],
+  ["新量表是否低有效作答", (row) => formatNarcissismLowValidity(row, "")],
+  ["新量表是否高风险触发", (row) => formatNarcissismHighRiskStatus(row, "")],
+  ["新量表高风险触发题", (row) =>
+    getNarcissismHighRiskTriggerSummary(row, "")],
+  ["新量表主要风险维度", (row) => getNarcissismDimensionSummary(row, "")],
   ["子女分流结果", (row) => formatGateAnswer(row.child_gate_answer)],
   ["跨境分流结果", (row) => formatGateAnswer(row.cross_border_gate_answer)],
   ["当前短板维度", (row) => formatArrayValue(row.weaknesses)],

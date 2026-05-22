@@ -2,6 +2,11 @@ import {
   RESULT_LEVEL_ALIASES,
   RESULT_LEVEL_QUERY_VALUES,
 } from "./constants";
+import {
+  ASSESSMENT_TYPE_FILTER_VALUES,
+  NARCISSISM_RISK_ASSESSMENT_TYPE,
+  SERVICE_INTENT_FILTER_VALUES,
+} from "./leadAssessment";
 import { getSupabaseServerClient } from "./supabaseServer";
 
 export const LEADS_PAGE_SIZE = 20;
@@ -9,13 +14,19 @@ export const LEADS_EXPORT_LIMIT = 1000;
 
 const LEAD_COLUMNS = [
   "id",
+  "assessment_type",
   "created_at",
   "contact_name",
   "contact_phone",
   "contact_wechat",
+  "service_intent",
   "result_level",
   "result_label",
+  "total_score",
+  "dynamic_full_score",
   "score_rate",
+  "dimension_scores",
+  "result_payload",
   "child_gate_answer",
   "cross_border_gate_answer",
   "follow_up_status",
@@ -25,13 +36,19 @@ const LEAD_COLUMNS = [
 ].join(",");
 
 const LEAD_EXPORT_COLUMNS = [
+  "assessment_type",
   "created_at",
   "contact_name",
   "contact_phone",
   "contact_wechat",
+  "service_intent",
   "result_level",
   "result_label",
+  "total_score",
+  "dynamic_full_score",
   "score_rate",
+  "dimension_scores",
+  "result_payload",
   "child_gate_answer",
   "cross_border_gate_answer",
   "weaknesses",
@@ -67,9 +84,11 @@ export function normalizeLeadFilters(raw = {}) {
   const filters = {
     name: getSafeFilter(raw.name),
     phone: getSafeFilter(raw.phone),
+    assessmentType: getSafeFilter(raw.assessmentType, "all") || "all",
     followUpStatus: getSafeFilter(raw.followUpStatus, "all") || "all",
     resultLevel: getSafeFilter(raw.resultLevel, "all") || "all",
     assignedTo: getSafeFilter(raw.assignedTo),
+    serviceIntent: getSafeFilter(raw.serviceIntent, "all") || "all",
     serviceType: getSafeFilter(raw.serviceType, "all") || "all",
     createdFrom: getSafeFilter(raw.createdFrom),
     createdTo: getSafeFilter(raw.createdTo),
@@ -96,9 +115,11 @@ export function buildLeadsSearchParams(filters, options = {}) {
   const entries = [
     ["name", filters.name],
     ["phone", filters.phone],
+    ["assessmentType", filters.assessmentType],
     ["followUpStatus", filters.followUpStatus],
     ["resultLevel", filters.resultLevel],
     ["assignedTo", filters.assignedTo],
+    ["serviceIntent", filters.serviceIntent],
     ["serviceType", filters.serviceType],
     ["createdFrom", filters.createdFrom],
     ["createdTo", filters.createdTo],
@@ -121,6 +142,22 @@ function applyLeadFilters(query, filters) {
   const supabase = getSupabaseServerClient();
   let nextQuery = query ?? supabase.from("assessment_results");
 
+  if (
+    hasText(filters.assessmentType) &&
+    filters.assessmentType !== ASSESSMENT_TYPE_FILTER_VALUES.all
+  ) {
+    if (filters.assessmentType === ASSESSMENT_TYPE_FILTER_VALUES.narcissism) {
+      nextQuery = nextQuery.eq(
+        "assessment_type",
+        NARCISSISM_RISK_ASSESSMENT_TYPE
+      );
+    } else if (filters.assessmentType === ASSESSMENT_TYPE_FILTER_VALUES.divorce) {
+      nextQuery = nextQuery.or(
+        `assessment_type.is.null,assessment_type.neq.${NARCISSISM_RISK_ASSESSMENT_TYPE}`
+      );
+    }
+  }
+
   if (hasText(filters.followUpStatus) && filters.followUpStatus !== "all") {
     nextQuery = nextQuery.eq("follow_up_status", filters.followUpStatus.trim());
   }
@@ -134,6 +171,17 @@ function applyLeadFilters(query, filters) {
 
   if (hasText(filters.assignedTo)) {
     nextQuery = nextQuery.ilike("assigned_to", `%${filters.assignedTo.trim()}%`);
+  }
+
+  if (
+    hasText(filters.serviceIntent) &&
+    filters.serviceIntent !== SERVICE_INTENT_FILTER_VALUES.all
+  ) {
+    if (filters.serviceIntent === SERVICE_INTENT_FILTER_VALUES.none) {
+      nextQuery = nextQuery.or("service_intent.is.null,service_intent.eq.");
+    } else {
+      nextQuery = nextQuery.eq("service_intent", filters.serviceIntent.trim());
+    }
   }
 
   if (hasText(filters.serviceType) && filters.serviceType !== "all") {
