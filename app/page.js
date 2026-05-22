@@ -8,13 +8,34 @@ import {
     RESULT_COPY,
 } from "../data/resultCopy.js";
 import { getLevelKey, getScore } from "../lib/scoring.js";
-import { buildSubmissionPayload } from "../lib/buildSubmissionPayload.js";
+import {
+    DIVORCE_READINESS_SERVICE_INTENT_OPTIONS,
+    buildSubmissionPayload,
+    resolveDivorceReadinessServiceIntent,
+} from "../lib/buildSubmissionPayload.js";
 import { supabase } from "../lib/supabaseClient.js";
 import IntroScreen from "../components/IntroScreen.js";
 import QuestionScreen from "../components/QuestionScreen.js";
 import ResultScreen from "../components/ResultScreen.js";
 
 const SYSTEM_QUESTION_IDS = ["SYS_CHILD_GATE", "SYS_CROSS_BORDER_GATE"];
+const CONTACT_NAME_PATTERN = /^[\u4e00-\u9fa5A-Za-z·\-\s]{2,30}$/;
+const CONTACT_PHONE_PATTERN = /^1[3-9]\d{9}$/;
+const CONTACT_NAME_ERROR_MESSAGE =
+    "请填写您的中文或英文称呼，需为 2–30 个字符，不能包含数字、符号或表情。";
+const CONTACT_PHONE_ERROR_MESSAGE =
+    "请填写中国大陆 11 位手机号，暂不支持座机、境外号码或带区号格式。";
+const FORM_INCOMPLETE_HINT =
+    "请选择服务类型，并填写有效的称呼和联系电话后提交。";
+const FORM_FIELD_ERROR_HINT = "请先修正上方标红的信息后再提交。";
+
+function validateContactName(value) {
+    return CONTACT_NAME_PATTERN.test(String(value ?? "").trim());
+}
+
+function validateContactPhone(value) {
+    return CONTACT_PHONE_PATTERN.test(String(value ?? "").trim());
+}
 
 function shuffleQuestionIds(questionIds) {
     const shuffled = [...questionIds];
@@ -110,6 +131,8 @@ export default function HomePage() {
     const [answers, setAnswers] = useState({});
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [hasSubmitted, setHasSubmitted] = useState(false);
+    const [serviceIntent, setServiceIntent] = useState("");
+    const [submittedServiceIntent, setSubmittedServiceIntent] = useState(null);
     const [submitFeedback, setSubmitFeedback] = useState({
         type: null,
         message: "",
@@ -123,6 +146,11 @@ export default function HomePage() {
         type: null,
         message: "",
     });
+    const [contactTouched, setContactTouched] = useState({
+        contact_name: false,
+        contact_phone: false,
+    });
+    const [submitAttempted, setSubmitAttempted] = useState(false);
     const [sessionQuestionIds, setSessionQuestionIds] = useState(SYSTEM_QUESTION_IDS);
 
     const submitLockRef = useRef(false);
@@ -232,12 +260,66 @@ export default function HomePage() {
         };
     }, [answers]);
 
+    const isServiceIntentValid = Boolean(
+        resolveDivorceReadinessServiceIntent(serviceIntent)
+    );
+    const isContactNameValid = validateContactName(contactForm.contact_name);
+    const isContactPhoneValid = validateContactPhone(contactForm.contact_phone);
+    const canSubmitLead =
+        isServiceIntentValid &&
+        isContactNameValid &&
+        isContactPhoneValid &&
+        !isSubmitting &&
+        !hasSubmitted;
+    const contactFieldErrors = {
+        contact_name:
+            (contactTouched.contact_name || submitAttempted) && !isContactNameValid
+                ? CONTACT_NAME_ERROR_MESSAGE
+                : "",
+        contact_phone:
+            (contactTouched.contact_phone || submitAttempted) && !isContactPhoneValid
+                ? CONTACT_PHONE_ERROR_MESSAGE
+                : "",
+    };
+    const hasVisibleContactFieldError = Boolean(
+        contactFieldErrors.contact_name || contactFieldErrors.contact_phone
+    );
+    const leadFormHintMessage = hasVisibleContactFieldError
+        ? FORM_FIELD_ERROR_HINT
+        : FORM_INCOMPLETE_HINT;
+
+    const resetLeadState = () => {
+        setIsSubmitting(false);
+        setHasSubmitted(false);
+        setServiceIntent("");
+        setSubmittedServiceIntent(null);
+        setContactForm({
+            contact_name: "",
+            contact_phone: "",
+            contact_wechat: "",
+        });
+        setContactTouched({
+            contact_name: false,
+            contact_phone: false,
+        });
+        setSubmitAttempted(false);
+        setContactFeedback({
+            type: null,
+            message: "",
+        });
+        setSubmitFeedback({
+            type: null,
+            message: "",
+        });
+        submitLockRef.current = false;
+    };
+
     const handleStart = () => {
         setStep("question");
         setCurrentIndex(0);
         setAnswers({});
         setSessionQuestionIds(SYSTEM_QUESTION_IDS);
-        setHasSubmitted(false);
+        resetLeadState();
         if (autoNextTimerRef.current) {
             clearTimeout(autoNextTimerRef.current);
             autoNextTimerRef.current = null;
@@ -299,21 +381,7 @@ export default function HomePage() {
         setCurrentIndex(0);
         setAnswers({});
         setSessionQuestionIds(SYSTEM_QUESTION_IDS);
-        setHasSubmitted(false);
-        setContactForm({
-            contact_name: "",
-            contact_phone: "",
-            contact_wechat: "",
-        });
-        setContactFeedback({
-            type: null,
-            message: "",
-        });
-        setSubmitFeedback({
-            type: null,
-            message: "",
-        });
-        submitLockRef.current = false;
+        resetLeadState();
         if (autoNextTimerRef.current) {
             clearTimeout(autoNextTimerRef.current);
             autoNextTimerRef.current = null;
@@ -323,21 +391,24 @@ export default function HomePage() {
     const handleSubmitResult = async () => {
         if (submitLockRef.current || isSubmitting || hasSubmitted) return;
 
-        const name = contactForm.contact_name.trim();
-        const phone = contactForm.contact_phone.trim();
-        const wechat = contactForm.contact_wechat.trim();
-        if (!name) {
-            setContactFeedback({
-                type: "error",
-                message: "\u8bf7\u586b\u5199\u79f0\u547c\u3002",
-            });
-            return;
-        }
+        setSubmitAttempted(true);
 
-        if (!phone) {
-            setContactFeedback({
-                type: "error",
-                message: "\u8bf7\u586b\u5199\u8054\u7cfb\u7535\u8bdd\u3002",
+        const contact = {
+            contact_name: contactForm.contact_name.trim(),
+            contact_phone: contactForm.contact_phone.trim(),
+            contact_wechat: contactForm.contact_wechat.trim(),
+        };
+        const resolvedServiceIntent =
+            resolveDivorceReadinessServiceIntent(serviceIntent);
+
+        if (
+            !resolvedServiceIntent ||
+            !validateContactName(contact.contact_name) ||
+            !validateContactPhone(contact.contact_phone)
+        ) {
+            setContactTouched({
+                contact_name: true,
+                contact_phone: true,
             });
             return;
         }
@@ -357,9 +428,11 @@ export default function HomePage() {
             const payload = buildSubmissionPayload({
                 answers,
                 resultData,
+                serviceIntent: resolvedServiceIntent.value,
             });
 
             const { error } = await supabase.from("assessment_results").insert({
+                assessment_type: payload.assessmentType,
                 total_score: payload.totalScore,
                 dynamic_full_score: payload.dynamicFullScore,
                 score_rate: payload.scoreRate,
@@ -370,11 +443,13 @@ export default function HomePage() {
                 weaknesses: payload.weaknesses,
                 dimension_scores: payload.dimensionScores,
                 answers: payload.answers,
-                contact_name: name,
-                contact_phone: phone,
-                contact_wechat: wechat,
-                submission_source: "web",
+                contact_name: contact.contact_name,
+                contact_phone: contact.contact_phone,
+                contact_wechat: contact.contact_wechat,
+                service_intent: payload.serviceIntent,
+                submission_source: payload.submissionSource,
                 follow_up_status: "new",
+                result_payload: payload.resultPayload,
             });
 
             if (error) {
@@ -386,10 +461,19 @@ export default function HomePage() {
                 return;
             }
 
+            setContactForm(contact);
+            setServiceIntent(resolvedServiceIntent.value);
+            setSubmittedServiceIntent(resolvedServiceIntent.value);
             setHasSubmitted(true);
             setSubmitFeedback({
                 type: "success",
-                message: "\u6d4b\u8bc4\u7ed3\u679c\u5df2\u6210\u529f\u63d0\u4ea4\u3002",
+                message: "信息已提交成功。",
+            });
+        } catch (error) {
+            console.error("Submit failed:", error);
+            setSubmitFeedback({
+                type: "error",
+                message: "提交失败，请检查网络或稍后重试。",
             });
         } finally {
             setIsSubmitting(false);
@@ -398,10 +482,59 @@ export default function HomePage() {
     };
 
     const handleContactFieldChange = (field, value) => {
+        if (hasSubmitted) return;
+
+        if (field === "contact_name" || field === "contact_phone") {
+            setContactTouched((prev) => ({
+                ...prev,
+                [field]: true,
+            }));
+        }
+
         setContactForm((prev) => ({
             ...prev,
             [field]: value,
         }));
+        if (contactFeedback.type) {
+            setContactFeedback({
+                type: null,
+                message: "",
+            });
+        }
+        if (submitFeedback.type) {
+            setSubmitFeedback({
+                type: null,
+                message: "",
+            });
+        }
+    };
+
+    const handleContactFieldBlur = (field) => {
+        if (field !== "contact_name" && field !== "contact_phone") return;
+
+        setContactTouched((prev) => ({
+            ...prev,
+            [field]: true,
+        }));
+    };
+
+    const handleServiceIntentChange = (value) => {
+        if (isSubmitting || hasSubmitted) return;
+
+        const resolvedIntent = resolveDivorceReadinessServiceIntent(value);
+        setServiceIntent(resolvedIntent?.value ?? "");
+        if (contactFeedback.type) {
+            setContactFeedback({
+                type: null,
+                message: "",
+            });
+        }
+        if (submitFeedback.type) {
+            setSubmitFeedback({
+                type: null,
+                message: "",
+            });
+        }
     };
 
     const progress =
@@ -438,9 +571,19 @@ export default function HomePage() {
                 isSubmitting={isSubmitting}
                 hasSubmitted={hasSubmitted}
                 submitFeedback={submitFeedback}
+                serviceIntent={serviceIntent}
+                submittedServiceIntent={submittedServiceIntent}
+                serviceIntentOptions={DIVORCE_READINESS_SERVICE_INTENT_OPTIONS}
                 contactForm={contactForm}
+                contactFieldErrors={contactFieldErrors}
                 contactFeedback={contactFeedback}
+                canSubmitLead={canSubmitLead}
+                formHintMessage={leadFormHintMessage}
+                formHintType={hasVisibleContactFieldError ? "error" : "neutral"}
+                onServiceIntentChange={handleServiceIntentChange}
                 onContactFieldChange={handleContactFieldChange}
+                onContactFieldBlur={handleContactFieldBlur}
+                onCloseSubmitSuccessModal={() => setSubmittedServiceIntent(null)}
             />
 
             

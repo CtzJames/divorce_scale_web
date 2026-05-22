@@ -1,5 +1,6 @@
 export const NARCISSISM_RISK_ASSESSMENT_TYPE = "spousal_narcissism_risk";
-export const DIVORCE_SCALE_ASSESSMENT_TYPE = "divorce_scale";
+export const DIVORCE_SCALE_ASSESSMENT_TYPE = "divorce_readiness";
+export const LEGACY_DIVORCE_SCALE_ASSESSMENT_TYPE = "divorce_scale";
 export const UNKNOWN_ASSESSMENT_TYPE = "unknown";
 
 export const ASSESSMENT_TYPE_FILTER_VALUES = {
@@ -162,6 +163,13 @@ export function getAssessmentTypeKey(record) {
 
   if (value === NARCISSISM_RISK_ASSESSMENT_TYPE) {
     return NARCISSISM_RISK_ASSESSMENT_TYPE;
+  }
+
+  if (
+    value === DIVORCE_SCALE_ASSESSMENT_TYPE ||
+    value === LEGACY_DIVORCE_SCALE_ASSESSMENT_TYPE
+  ) {
+    return DIVORCE_SCALE_ASSESSMENT_TYPE;
   }
 
   if (isBlank(value)) {
