@@ -97,7 +97,12 @@ function ReadonlyBox({ label, value }) {
   );
 }
 
-export default function LeadDetailForm({ row, action }) {
+export default function LeadDetailForm({
+  row,
+  action,
+  canOpenLegacyReport = true,
+  reportUnavailableMessage = "",
+}) {
   const initialServiceTypes = useMemo(
     () => getInitialServiceTypes(row.service_type),
     [row.service_type]
@@ -117,11 +122,17 @@ export default function LeadDetailForm({ row, action }) {
   const shouldShowContactSupplement =
     hasContactSupplementValue(formState) ||
     CONTACT_SUPPLEMENT_STATUS.has(formState.follow_up_status);
-  const reportStatus = row.report_generated_at ? "可预览" : "未生成";
-  const includedDimensionCodes = getIncludedDimensionCodes({
-    childGateAnswer: row.child_gate_answer,
-    crossBorderGateAnswer: row.cross_border_gate_answer,
-  });
+  const reportStatus = canOpenLegacyReport
+    ? row.report_generated_at
+      ? "可预览"
+      : "未生成"
+    : "暂未接入";
+  const includedDimensionCodes = canOpenLegacyReport
+    ? getIncludedDimensionCodes({
+        childGateAnswer: row.child_gate_answer,
+        crossBorderGateAnswer: row.cross_border_gate_answer,
+      })
+    : [];
 
   function updateField(name, value) {
     setFormState((current) => ({ ...current, [name]: value }));
@@ -327,8 +338,16 @@ export default function LeadDetailForm({ row, action }) {
       </Section>
 
       <Section
-        title="用户测评详细解读报告区"
-        description="本区仅展示状态与主入口，不在详情页内直接展开长报告正文。"
+        title={
+          canOpenLegacyReport
+            ? "用户测评详细解读报告区"
+            : "详细报告暂未接入"
+        }
+        description={
+          canOpenLegacyReport
+            ? "本区仅展示状态与主入口，不在详情页内直接展开长报告正文。"
+            : "该记录不会进入旧离婚力量表详细报告。"
+        }
       >
         <div className="grid detail-edit-grid">
           <label className="field">
@@ -356,15 +375,25 @@ export default function LeadDetailForm({ row, action }) {
 
         <div className="report-entry-actions">
           <div className="muted reserve-note">
-            当前首版采用独立子页面预览，进入报告页时会轻量写回报告生成时间与默认版本，不联动其他跟进字段。
+            {canOpenLegacyReport
+              ? "当前首版采用独立子页面预览，进入报告页时会轻量写回报告生成时间与默认版本，不联动其他跟进字段。"
+              : reportUnavailableMessage}
           </div>
-          <a className="btn btn-primary" href={`/leads/${row.id}/report`}>
-            查看用户测评详细解读报告
-          </a>
+          {canOpenLegacyReport ? (
+            <a className="btn btn-primary" href={`/leads/${row.id}/report`}>
+              查看用户测评详细解读报告
+            </a>
+          ) : (
+            <span className="btn btn-muted disabled-btn" aria-disabled="true">
+              暂不生成详细报告
+            </span>
+          )}
         </div>
 
         <p className="muted reserve-note">
-          当前展示口径仅保留“未生成 / 可预览”。图片导出在报告页中完成，PDF 导出与 report_content 持久化后置。
+          {canOpenLegacyReport
+            ? "当前展示口径仅保留“未生成 / 可预览”。图片导出在报告页中完成，PDF 导出与 report_content 持久化后置。"
+            : "后台跟进字段仍可正常保存；详细报告、图片导出和 PDF 导出待第二阶段接入。"}
         </p>
       </Section>
 

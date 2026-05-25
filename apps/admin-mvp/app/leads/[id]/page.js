@@ -25,6 +25,23 @@ import {
   getDisplayScore,
 } from "../../../lib/assessmentDisplay";
 import LeadDetailForm from "../../../components/LeadDetailForm";
+import {
+  formatNarcissismAverageScore,
+  formatNarcissismHighRiskStatus,
+  formatNarcissismLowValidity,
+  getAssessmentTypeLabel,
+  getLeadServiceIntentLabel,
+  getNarcissismAnswerRows,
+  getNarcissismDimensionRows,
+  getNarcissismHighRiskTriggered,
+  getNarcissismHighRiskTriggers,
+  getNarcissismNaAnswerCount,
+  getNarcissismResultLevelLabel,
+  getNarcissismValidAnswerCount,
+  getNarcissismLowValidity,
+  isDivorceReadinessRecord,
+  isNarcissismRiskRecord,
+} from "../../../lib/leadAssessment";
 
 export const dynamic = "force-dynamic";
 
@@ -58,10 +75,13 @@ async function saveLeadDetailAction(id, formData) {
 }
 
 function InfoItem({ label, value }) {
+  const displayValue =
+    value === null || value === undefined || value === "" ? "-" : value;
+
   return (
     <div className="info-item">
       <span>{label}</span>
-      <strong>{value || "-"}</strong>
+      <strong>{displayValue}</strong>
     </div>
   );
 }
@@ -185,6 +205,171 @@ function AnswersTable({ answers }) {
   );
 }
 
+function formatDimensionAverage(value) {
+  return Number.isFinite(value) ? `${value.toFixed(2)} / 5` : "-";
+}
+
+function NarcissismRiskResultSummary({ row }) {
+  const lowValidity = getNarcissismLowValidity(row);
+
+  return (
+    <Section title="测评结果摘要" description="结果字段优先读取前台写入的 result_payload，后台不重新改判定逻辑。">
+      <div className="info-grid">
+        <InfoItem
+          label="风险等级"
+          value={row.result_label || getNarcissismResultLevelLabel(row.result_level)}
+        />
+        <InfoItem label="result_level" value={row.result_level} />
+        <InfoItem label="总平均分" value={formatNarcissismAverageScore(row)} />
+        <InfoItem
+          label="总分 / 动态满分"
+          value={`${row.total_score ?? "-"} / ${row.dynamic_full_score ?? "-"}`}
+        />
+        <InfoItem label="得分率" value={formatScoreRate(row.score_rate)} />
+        <InfoItem label="有效作答数" value={getNarcissismValidAnswerCount(row)} />
+        <InfoItem label="NA 数量" value={getNarcissismNaAnswerCount(row)} />
+        <InfoItem label="低有效作答" value={formatNarcissismLowValidity(row)} />
+        <InfoItem label="高风险触发" value={formatNarcissismHighRiskStatus(row)} />
+      </div>
+      {lowValidity ? (
+        <div className="notice soft">
+          当前记录标记为低有效作答，测评结果需要结合实际情况谨慎理解。
+        </div>
+      ) : null}
+    </Section>
+  );
+}
+
+function NarcissismRiskDimensionScores({ row }) {
+  const rows = getNarcissismDimensionRows(row);
+
+  return (
+    <div className="dimension-list narcissism-dimension-list">
+      {rows.map((item) => (
+        <div className="dimension-row narcissism-dimension-row" key={item.code}>
+          <span className="narcissism-dimension-title">
+            {item.code} {item.name}
+          </span>
+          <span className="muted">
+            短名：{item.shortName || "-"}｜均分：
+            <strong>{formatDimensionAverage(item.averageScore)}</strong>
+            ｜有效：{item.validCount ?? "-"}｜NA：{item.naCount ?? "-"}
+            {item.noValidAnswers
+              ? "｜无有效作答"
+              : item.insufficientValidity
+                ? "｜有效作答不足"
+                : ""}
+          </span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function NarcissismRiskHighRiskTriggers({ row }) {
+  const triggered = getNarcissismHighRiskTriggered(row);
+  const triggers = getNarcissismHighRiskTriggers(row);
+
+  return (
+    <>
+      <h3 className="subhead">
+        高风险触发题：{triggered ? "已触发" : "未触发"}
+      </h3>
+      {!triggered ? (
+        <p className="empty">未触发高风险安全题。</p>
+      ) : triggers.length ? (
+        <div className="answers-wrap">
+          <table className="answers-table narcissism-trigger-table">
+            <thead>
+              <tr>
+                <th>题号</th>
+                <th>题干</th>
+                <th>用户选择</th>
+                <th>实际计分</th>
+              </tr>
+            </thead>
+            <tbody>
+              {triggers.map((item) => (
+                <tr key={item.key}>
+                  <td>{item.questionNo} / {item.questionId}</td>
+                  <td>{item.questionText}</td>
+                  <td>{item.choice}</td>
+                  <td>{item.score ?? "-"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div className="notice soft">
+          当前记录标记为已触发，但未写入具体触发题明细。
+        </div>
+      )}
+    </>
+  );
+}
+
+function NarcissismRiskAnswersTable({ row }) {
+  const rows = getNarcissismAnswerRows(row);
+
+  if (!rows.length) {
+    return (
+      <>
+        <h3 className="subhead">原始作答</h3>
+        <p className="empty">暂无原始作答。</p>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <h3 className="subhead">原始作答</h3>
+      <div className="answers-wrap">
+        <table className="answers-table narcissism-answers-table">
+          <thead>
+            <tr>
+              <th>题号</th>
+              <th>维度</th>
+              <th>题干</th>
+              <th>用户选择</th>
+              <th>NA</th>
+              <th>反向</th>
+              <th>高风险</th>
+              <th>计分</th>
+            </tr>
+          </thead>
+          <tbody>
+            {rows.map((item) => (
+              <tr key={item.questionId}>
+                <td>{item.questionNo} / {item.questionId}</td>
+                <td>{item.dimension}</td>
+                <td>{item.questionText}</td>
+                <td>{item.choice}</td>
+                <td>{item.isNa}</td>
+                <td>{item.reverseScored}</td>
+                <td>{item.highRiskQuestion}</td>
+                <td>{item.score}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
+  );
+}
+
+function NarcissismRiskDimensionDetails({ row }) {
+  return (
+    <Section title="维度详情" description="展示当前记录的维度均分、高风险触发题与原始作答明细。">
+      <h3 className="subhead">五维度均分</h3>
+      <NarcissismRiskDimensionScores row={row} />
+
+      <NarcissismRiskHighRiskTriggers row={row} />
+      <NarcissismRiskAnswersTable row={row} />
+    </Section>
+  );
+}
+
 export default async function LeadDetailPage({ params, searchParams }) {
   const cookieStore = await cookies();
   const sessionValue = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;
@@ -225,6 +410,8 @@ export default async function LeadDetailPage({ params, searchParams }) {
   }
 
   const saveAction = saveLeadDetailAction.bind(null, row.id);
+  const isNarcissismRisk = isNarcissismRiskRecord(row);
+  const canOpenLegacyReport = isDivorceReadinessRecord(row);
 
   return (
     <main className="page">
@@ -266,35 +453,53 @@ export default async function LeadDetailPage({ params, searchParams }) {
             <InfoItem label="微信" value={row.contact_wechat} />
             <InfoItem label="提交时间" value={formatDateTime(row.created_at)} />
             <InfoItem label="提交来源" value={row.submission_source} />
+            <InfoItem label="量表类型" value={getAssessmentTypeLabel(row)} />
+            <InfoItem label="用户服务意向" value={getLeadServiceIntentLabel(row)} />
           </div>
         </Section>
 
-        <Section title="测评结果摘要" description="结果字段由前台写入，后台保持只读。">
-          <div className="info-grid">
-            <InfoItem label="结果等级" value={row.result_label || row.result_level} />
-            <InfoItem label="得分率" value={formatScoreRate(row.score_rate)} />
-            <InfoItem
-              label="总分 / 动态满分"
-              value={`${row.total_score ?? "-"} / ${row.dynamic_full_score ?? "-"}`}
-            />
-            <InfoItem label="短板维度" value={formatArrayValue(row.weaknesses)} />
-            <InfoItem label="子女分流" value={formatGateAnswer(row.child_gate_answer)} />
-            <InfoItem
-              label="跨境分流"
-              value={formatGateAnswer(row.cross_border_gate_answer)}
-            />
-          </div>
-        </Section>
+        {isNarcissismRisk ? (
+          <>
+            <NarcissismRiskResultSummary row={row} />
+            <NarcissismRiskDimensionDetails row={row} />
+          </>
+        ) : (
+          <>
+            <Section title="测评结果摘要" description="结果字段由前台写入，后台保持只读。">
+              <div className="info-grid">
+                <InfoItem label="结果等级" value={row.result_label || row.result_level} />
+                <InfoItem label="得分率" value={formatScoreRate(row.score_rate)} />
+                <InfoItem
+                  label="总分 / 动态满分"
+                  value={`${row.total_score ?? "-"} / ${row.dynamic_full_score ?? "-"}`}
+                />
+                <InfoItem label="短板维度" value={formatArrayValue(row.weaknesses)} />
+                <InfoItem label="子女分流" value={formatGateAnswer(row.child_gate_answer)} />
+                <InfoItem
+                  label="跨境分流"
+                  value={formatGateAnswer(row.cross_border_gate_answer)}
+                />
+              </div>
+            </Section>
 
-        <Section title="维度详情" description="旧数据缺少维度得分时会显示为空值状态。">
-          <h3 className="subhead">维度平均分</h3>
-          <DimensionScores value={row.dimension_scores} answers={row.answers} />
+            <Section title="维度详情" description="旧数据缺少维度得分时会显示为空值状态。">
+              <h3 className="subhead">维度平均分</h3>
+              <DimensionScores value={row.dimension_scores} answers={row.answers} />
 
-          <h3 className="subhead">原始答案</h3>
-          <AnswersTable answers={row.answers} />
-        </Section>
+              <h3 className="subhead">原始答案</h3>
+              <AnswersTable answers={row.answers} />
+            </Section>
+          </>
+        )}
 
-        <LeadDetailForm row={row} action={saveAction} />
+        <LeadDetailForm
+          row={row}
+          action={saveAction}
+          canOpenLegacyReport={canOpenLegacyReport}
+          reportUnavailableMessage={
+            "该量表的后台详细报告将在第二阶段接入，当前暂不生成离婚力量表详细报告。"
+          }
+        />
 
         <section className="panel">
           <div className="info-grid">

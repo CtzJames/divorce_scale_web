@@ -7,10 +7,12 @@ import { getSupabaseServerClient } from "./supabaseServer";
 
 const LEAD_DETAIL_COLUMNS = [
   "id",
+  "assessment_type",
   "created_at",
   "contact_name",
   "contact_phone",
   "contact_wechat",
+  "service_intent",
   "submission_source",
   "total_score",
   "dynamic_full_score",
@@ -22,6 +24,7 @@ const LEAD_DETAIL_COLUMNS = [
   "weaknesses",
   "dimension_scores",
   "answers",
+  "result_payload",
   "follow_up_status",
   "admin_note",
   "service_type",

@@ -362,6 +362,20 @@ th {
   background: #fbfcfe;
 }
 
+.narcissism-dimension-row {
+  display: grid;
+  gap: 6px;
+  justify-content: stretch;
+}
+
+.narcissism-dimension-title {
+  font-weight: 700;
+}
+
+.narcissism-dimension-row strong {
+  margin: 0 2px;
+}
+
 .source-note {
   border: 1px solid #c9d8e8;
   border-radius: 10px;
@@ -413,6 +427,65 @@ th {
 .answers-table th:nth-child(5),
 .answers-table td:nth-child(5) {
   width: 90px;
+}
+
+.narcissism-answers-table {
+  min-width: 1080px;
+}
+
+.narcissism-answers-table th:nth-child(1),
+.narcissism-answers-table td:nth-child(1) {
+  width: 110px;
+}
+
+.narcissism-answers-table th:nth-child(2),
+.narcissism-answers-table td:nth-child(2) {
+  width: 170px;
+}
+
+.narcissism-answers-table th:nth-child(3),
+.narcissism-answers-table td:nth-child(3) {
+  width: 430px;
+}
+
+.narcissism-answers-table th:nth-child(4),
+.narcissism-answers-table td:nth-child(4) {
+  width: 150px;
+}
+
+.narcissism-answers-table th:nth-child(5),
+.narcissism-answers-table td:nth-child(5),
+.narcissism-answers-table th:nth-child(6),
+.narcissism-answers-table td:nth-child(6),
+.narcissism-answers-table th:nth-child(7),
+.narcissism-answers-table td:nth-child(7),
+.narcissism-answers-table th:nth-child(8),
+.narcissism-answers-table td:nth-child(8) {
+  width: 70px;
+}
+
+.narcissism-trigger-table {
+  min-width: 860px;
+}
+
+.narcissism-trigger-table th:nth-child(1),
+.narcissism-trigger-table td:nth-child(1) {
+  width: 120px;
+}
+
+.narcissism-trigger-table th:nth-child(2),
+.narcissism-trigger-table td:nth-child(2) {
+  width: 470px;
+}
+
+.narcissism-trigger-table th:nth-child(3),
+.narcissism-trigger-table td:nth-child(3) {
+  width: 170px;
+}
+
+.narcissism-trigger-table th:nth-child(4),
+.narcissism-trigger-table td:nth-child(4) {
+  width: 100px;
 }
 
 .service-type-field {

@@ -22,6 +22,11 @@ import {
   getTotalResultCopy,
   REPORT_DIMENSION_COPY,
 } from "../../../../lib/reportContent";
+import {
+  getAssessmentTypeLabel,
+  isDivorceReadinessRecord,
+  isNarcissismRiskRecord,
+} from "../../../../lib/leadAssessment";
 
 export const dynamic = "force-dynamic";
 
@@ -65,6 +70,40 @@ function buildReportStatusText(row) {
   return row.report_generated_at ? "可预览" : "未生成";
 }
 
+function UnsupportedReportNotice({ row }) {
+  const isNarcissismRisk = isNarcissismRiskRecord(row);
+  const assessmentTypeLabel = isNarcissismRisk
+    ? "配偶高自恋特质与高冲突婚姻风险自测量表"
+    : getAssessmentTypeLabel(row);
+
+  return (
+    <main className="page">
+      <div className="container">
+        <section className="panel">
+          <div className="title-row">
+            <div>
+              <h1 className="title">暂不生成离婚力量表详细报告</h1>
+              <p className="subtitle">
+                {isNarcissismRisk
+                  ? "该记录来自“配偶高自恋特质与高冲突婚姻风险自测量表”。该量表的后台详细报告将在第二阶段接入，当前暂不生成离婚力量表详细报告。"
+                  : `该记录来自“${assessmentTypeLabel}”。当前暂未接入该类型的后台详细报告，未生成离婚力量表详细报告。`}
+              </p>
+            </div>
+            <div className="toolbar">
+              <Link className="btn btn-muted" href={`/leads/${row.id}`}>
+                返回详情页
+              </Link>
+              <Link className="btn btn-ghost" href="/leads">
+                返回列表
+              </Link>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}
+
 export default async function LeadReportRoute({ params }) {
   const cookieStore = await cookies();
   const sessionValue = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;
@@ -96,6 +135,10 @@ export default async function LeadReportRoute({ params }) {
         </div>
       </main>
     );
+  }
+
+  if (!isDivorceReadinessRecord(row)) {
+    return <UnsupportedReportNotice row={row} />;
   }
 
   const writeBackResult = await markLeadReportPreviewGenerated(row.id);
