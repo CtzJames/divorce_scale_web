@@ -412,6 +412,7 @@ export default async function LeadDetailPage({ params, searchParams }) {
   const saveAction = saveLeadDetailAction.bind(null, row.id);
   const isNarcissismRisk = isNarcissismRiskRecord(row);
   const canOpenLegacyReport = isDivorceReadinessRecord(row);
+  const canOpenReport = canOpenLegacyReport || isNarcissismRisk;
 
   return (
     <main className="page">
@@ -496,6 +497,8 @@ export default async function LeadDetailPage({ params, searchParams }) {
           row={row}
           action={saveAction}
           canOpenLegacyReport={canOpenLegacyReport}
+          canOpenReport={canOpenReport}
+          reportIncludedDimensionText={isNarcissismRisk ? "N1、N2、N3、N4、N5" : ""}
           reportUnavailableMessage={
             "该量表的后台详细报告将在第二阶段接入，当前暂不生成离婚力量表详细报告。"
           }

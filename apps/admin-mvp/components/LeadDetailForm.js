@@ -101,6 +101,8 @@ export default function LeadDetailForm({
   row,
   action,
   canOpenLegacyReport = true,
+  canOpenReport = canOpenLegacyReport,
+  reportIncludedDimensionText = "",
   reportUnavailableMessage = "",
 }) {
   const initialServiceTypes = useMemo(
@@ -122,7 +124,7 @@ export default function LeadDetailForm({
   const shouldShowContactSupplement =
     hasContactSupplementValue(formState) ||
     CONTACT_SUPPLEMENT_STATUS.has(formState.follow_up_status);
-  const reportStatus = canOpenLegacyReport
+  const reportStatus = canOpenReport
     ? row.report_generated_at
       ? "可预览"
       : "未生成"
@@ -133,6 +135,8 @@ export default function LeadDetailForm({
         crossBorderGateAnswer: row.cross_border_gate_answer,
       })
     : [];
+  const includedDimensionValue =
+    reportIncludedDimensionText || includedDimensionCodes.join("、") || "-";
 
   function updateField(name, value) {
     setFormState((current) => ({ ...current, [name]: value }));
@@ -339,12 +343,12 @@ export default function LeadDetailForm({
 
       <Section
         title={
-          canOpenLegacyReport
+          canOpenReport
             ? "用户测评详细解读报告区"
             : "详细报告暂未接入"
         }
         description={
-          canOpenLegacyReport
+          canOpenReport
             ? "本区仅展示状态与主入口，不在详情页内直接展开长报告正文。"
             : "该记录不会进入旧离婚力量表详细报告。"
         }
@@ -369,17 +373,17 @@ export default function LeadDetailForm({
           />
           <ReadonlyBox
             label="纳入报告维度"
-            value={includedDimensionCodes.join("、") || "-"}
+            value={includedDimensionValue}
           />
         </div>
 
         <div className="report-entry-actions">
           <div className="muted reserve-note">
-            {canOpenLegacyReport
+            {canOpenReport
               ? "当前首版采用独立子页面预览，进入报告页时会轻量写回报告生成时间与默认版本，不联动其他跟进字段。"
               : reportUnavailableMessage}
           </div>
-          {canOpenLegacyReport ? (
+          {canOpenReport ? (
             <a className="btn btn-primary" href={`/leads/${row.id}/report`}>
               查看用户测评详细解读报告
             </a>
@@ -391,7 +395,7 @@ export default function LeadDetailForm({
         </div>
 
         <p className="muted reserve-note">
-          {canOpenLegacyReport
+          {canOpenReport
             ? "当前展示口径仅保留“未生成 / 可预览”。图片导出在报告页中完成，PDF 导出与 report_content 持久化后置。"
             : "后台跟进字段仍可正常保存；详细报告、图片导出和 PDF 导出待第二阶段接入。"}
         </p>

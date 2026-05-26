@@ -27,6 +27,8 @@ import {
   isDivorceReadinessRecord,
   isNarcissismRiskRecord,
 } from "../../../../lib/leadAssessment";
+import { buildNarcissismRiskReportData } from "../../../../lib/narcissismRiskReportAdapter";
+import NarcissismRiskReportPage from "../../../../components/narcissism-risk/NarcissismRiskReportPage";
 
 export const dynamic = "force-dynamic";
 
@@ -132,6 +134,50 @@ export default async function LeadReportRoute({ params }) {
               </Link>
             </div>
           </section>
+        </div>
+      </main>
+    );
+  }
+
+  if (isNarcissismRiskRecord(row)) {
+    const writeBackResult = await markLeadReportPreviewGenerated(row.id);
+    const effectiveRow = writeBackResult.row ?? row;
+    const report = buildNarcissismRiskReportData(effectiveRow);
+
+    return (
+      <main className="page">
+        <div className="container detail-container">
+          <section className="panel">
+            <div className="title-row">
+              <div>
+                <h1 className="title">配偶高自恋风险测评详细解读报告</h1>
+                <p className="subtitle">
+                  后台单条记录的完整预览页，当前报告不做持久化，不开放用户端访问。
+                </p>
+              </div>
+              <div className="toolbar">
+                <Link className="btn btn-muted" href={`/leads/${effectiveRow.id}`}>
+                  返回详情页
+                </Link>
+                <Link className="btn btn-ghost" href="/leads">
+                  返回列表
+                </Link>
+              </div>
+            </div>
+
+            {writeBackResult.error ? (
+              <div className="notice error">
+                报告页已打开，但本次未成功写回报告生成时间，请稍后重试。
+              </div>
+            ) : (
+              <div className="notice success">
+                已按当前路径写回报告生成时间
+                {effectiveRow.report_version ? `，当前版本为 ${effectiveRow.report_version}` : ""}。
+              </div>
+            )}
+          </section>
+
+          <NarcissismRiskReportPage report={report} />
         </div>
       </main>
     );
