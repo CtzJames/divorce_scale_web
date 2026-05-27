@@ -1,7 +1,7 @@
 import {
   ASSET_TIER_LEVEL_OPTIONS,
   FOLLOW_UP_STATUS_OPTIONS,
-  SERVICE_TYPE_OPTIONS,
+  VALID_SERVICE_TYPE_VALUES,
 } from "./constants";
 import { getSupabaseServerClient } from "./supabaseServer";
 
@@ -50,11 +50,7 @@ const VALID_FOLLOW_UP_STATUS = new Set(
   )
 );
 
-const VALID_SERVICE_TYPES = new Set(
-  SERVICE_TYPE_OPTIONS.filter((item) => item.value !== "all").map(
-    (item) => item.value
-  )
-);
+const VALID_SERVICE_TYPES = new Set(VALID_SERVICE_TYPE_VALUES);
 
 const VALID_CLIENT_GENDER = new Set(["male", "female"]);
 

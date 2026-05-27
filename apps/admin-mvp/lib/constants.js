@@ -11,14 +11,31 @@ export const FOLLOW_UP_STATUS_OPTIONS = [
 export const SERVICE_TYPE_OPTIONS = [
   { value: "all", label: "全部服务类型" },
   { value: "none", label: "未明确" },
-  { value: "single_consultation", label: "单次咨询" },
-  { value: "divorce_escorting", label: "离婚陪跑" },
-  { value: "long_term_consultation", label: "长期咨询" },
-  { value: "screening_service", label: "甄选服务" },
-  { value: "litigation_representation", label: "诉讼代理" },
-  { value: "agreement_support", label: "协议离婚协助" },
-  { value: "cross_border_support", label: "跨境专项支持" },
+  { value: "consultation", label: "咨询服务" },
+  { value: "package_divorce", label: "包离服务" },
+  { value: "divorce_companion", label: "离婚陪跑" },
+  { value: "litigation_agent", label: "诉讼代理" },
+  { value: "agreement_document", label: "协议文书" },
+  { value: "divorce_negotiation", label: "离婚谈判" },
+  { value: "cross_border_selection", label: "跨境甄选" },
   { value: "other", label: "其他" },
+];
+
+export const LEGACY_SERVICE_TYPE_LABELS = {
+  single_consultation: "单次咨询（历史选项）",
+  divorce_escorting: "离婚陪跑（历史选项）",
+  long_term_consultation: "长期咨询（历史选项）",
+  screening_service: "甄选服务（历史选项）",
+  litigation_representation: "诉讼代理（历史选项）",
+  agreement_support: "协议离婚协助（历史选项）",
+  cross_border_support: "跨境专项支持（历史选项）",
+};
+
+export const VALID_SERVICE_TYPE_VALUES = [
+  ...SERVICE_TYPE_OPTIONS.filter((item) => item.value !== "all").map(
+    (item) => item.value
+  ),
+  ...Object.keys(LEGACY_SERVICE_TYPE_LABELS),
 ];
 
 export const REPORT_VISIBILITY_OPTIONS = [
@@ -71,7 +88,7 @@ const followUpLabelMap = FOLLOW_UP_STATUS_OPTIONS.reduce((acc, item) => {
 const serviceTypeLabelMap = SERVICE_TYPE_OPTIONS.reduce((acc, item) => {
   if (item.value !== "all") acc[item.value] = item.label;
   return acc;
-}, {});
+}, { ...LEGACY_SERVICE_TYPE_LABELS });
 
 const reportVisibilityLabelMap = REPORT_VISIBILITY_OPTIONS.reduce(
   (acc, item) => {

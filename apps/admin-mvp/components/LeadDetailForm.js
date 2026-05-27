@@ -5,6 +5,7 @@ import {
   ASSET_TIER_LEVEL_OPTIONS,
   FOLLOW_UP_STATUS_OPTIONS,
   SERVICE_TYPE_OPTIONS,
+  getServiceTypeLabel,
 } from "../lib/constants";
 import { formatDateTime, formatDateTimeInputValue } from "../lib/format";
 import { getIncludedDimensionCodes } from "../lib/reportContent";
@@ -35,6 +36,22 @@ function normalizeServiceTypes(values) {
   const selected = Array.from(new Set(values.filter(Boolean)));
   if (!selected.length || selected.includes("none")) return ["none"];
   return selected.sort();
+}
+
+const SELECTABLE_SERVICE_TYPE_VALUES = new Set(
+  SERVICE_TYPE_OPTIONS.filter((item) => item.value !== "all").map(
+    (item) => item.value
+  )
+);
+
+function isSelectableServiceType(value) {
+  return SELECTABLE_SERVICE_TYPE_VALUES.has(value);
+}
+
+function getPreservedServiceTypes(values) {
+  return normalizeServiceTypes(values).filter(
+    (value) => value !== "none" && !isSelectableServiceType(value)
+  );
 }
 
 function getInitialServiceTypes(value) {
@@ -78,14 +95,12 @@ function makeBaseline(row, serviceTypes) {
 
 function getServiceLabels(values) {
   const normalized = normalizeServiceTypes(values);
-  if (normalized.includes("none")) return "未明确";
+  if (normalized.includes("none")) return getServiceTypeLabel("none");
 
   const labels = normalized
-    .map(
-      (value) => SERVICE_TYPE_OPTIONS.find((item) => item.value === value)?.label
-    )
+    .map((value) => getServiceTypeLabel(value))
     .filter(Boolean);
-  return labels.length ? labels.join("、") : "未明确";
+  return labels.length ? labels.join("、") : getServiceTypeLabel("none");
 }
 
 function ReadonlyBox({ label, value }) {
@@ -148,11 +163,20 @@ export default function LeadDetailForm({
         return checked ? ["none"] : [];
       }
 
-      const withoutNone = current.filter((item) => item !== "none");
-      if (checked) return Array.from(new Set([...withoutNone, value]));
-      return withoutNone.filter((item) => item !== value);
+      const selectableValues = current.filter(
+        (item) => item !== "none" && isSelectableServiceType(item)
+      );
+      if (checked) return Array.from(new Set([...selectableValues, value]));
+
+      const nextSelectableValues = selectableValues.filter(
+        (item) => item !== value
+      );
+      if (nextSelectableValues.length) return nextSelectableValues;
+      return getPreservedServiceTypes(current);
     });
   }
+
+  const preservedServiceTypes = getPreservedServiceTypes(serviceTypes);
 
   return (
     <form action={action} className="detail-form">
@@ -179,6 +203,14 @@ export default function LeadDetailForm({
                 <strong>{getServiceLabels(serviceTypes)}</strong>
               </div>
               <div className="checkbox-grid">
+                {preservedServiceTypes.map((value) => (
+                  <input
+                    key={value}
+                    type="hidden"
+                    name="service_type"
+                    value={value}
+                  />
+                ))}
                 {SERVICE_TYPE_OPTIONS.filter((item) => item.value !== "all").map(
                   (item) => (
                     <label className="checkbox-field" key={item.value}>
