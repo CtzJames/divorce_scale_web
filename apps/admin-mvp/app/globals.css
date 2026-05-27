@@ -2977,6 +2977,27 @@ th {
   white-space: nowrap;
 }
 
+.narcissism-report-score-nowrap {
+  white-space: nowrap;
+}
+
+.a4-report-rate-panel .narcissism-report-score-nowrap {
+  font-size: 44px;
+}
+
+.narcissism-report-root .mobile-report-rate-lockup {
+  flex-wrap: wrap;
+}
+
+.narcissism-report-root .mobile-report-rate-lockup strong {
+  font-size: 66px;
+  white-space: nowrap;
+}
+
+.narcissism-report-root .a4-report-overview .a4-report-metric-grid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
 .narcissism-report-single-column-card {
   grid-template-columns: 1fr;
 }
@@ -3017,6 +3038,84 @@ th {
   line-height: 1.65;
 }
 
+.narcissism-report-focus-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px 8px;
+  margin-top: 2px;
+}
+
+.narcissism-report-focus-grid span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid rgba(23, 61, 116, 0.14);
+  border-radius: 999px;
+  background: rgba(23, 61, 116, 0.06);
+  color: #173d74;
+  font-size: 13px;
+  line-height: 1.2;
+  font-weight: 800;
+  text-align: center;
+}
+
+.narcissism-report-focus-grid.is-compact {
+  gap: 5px 6px;
+}
+
+.narcissism-report-focus-grid.is-compact span {
+  min-height: 24px;
+  padding: 0 6px;
+  font-size: 12px;
+}
+
+.mobile-report-metric-card .narcissism-report-focus-grid span {
+  color: #173d74;
+  font-size: 20px;
+  line-height: 1.25;
+  font-weight: 800;
+}
+
+.narcissism-report-root .a4-report-dimension-overview-name {
+  gap: 8px;
+}
+
+.narcissism-report-root .a4-report-dimension-overview-name .dimension-icon-badge {
+  width: 32px;
+  height: 32px;
+}
+
+.narcissism-report-root .a4-report-dimension-overview-name .dimension-icon-badge svg {
+  width: 18px;
+  height: 18px;
+}
+
+.narcissism-report-root .a4-report-dimension-overview-score {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  max-width: 128px;
+}
+
+.narcissism-report-root .a4-report-dimension-overview-score .narcissism-report-level-tag {
+  margin-top: 4px;
+  min-height: 24px;
+  padding: 0 9px;
+  font-size: 11.5px;
+}
+
+.narcissism-report-dimension-mark {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+
+.narcissism-report-dimension-mark .dimension-icon-badge {
+  width: 52px;
+  height: 52px;
+}
+
 .narcissism-report-trigger-list,
 .narcissism-report-validity-grid {
   display: grid;
@@ -3037,6 +3136,48 @@ th {
 .narcissism-report-compact-copy p {
   font-size: 14px;
   line-height: 1.75;
+}
+
+.narcissism-report-high-risk-page {
+  height: 1123px;
+}
+
+.narcissism-report-high-risk-page .a4-report-page-body {
+  gap: 12px;
+  padding: 16px 0 12px;
+}
+
+.narcissism-report-high-risk-page .a4-report-boundary-title {
+  gap: 12px;
+  padding: 18px 20px;
+}
+
+.narcissism-report-high-risk-page .a4-report-boundary-title h2 {
+  font-size: 24px;
+}
+
+.narcissism-report-high-risk-page .a4-report-boundary-title p {
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.narcissism-report-high-risk-page .narcissism-report-trigger-list {
+  gap: 10px;
+}
+
+.narcissism-report-high-risk-page .narcissism-report-trigger-list .a4-report-copy-block {
+  gap: 7px;
+  padding: 12px 14px;
+}
+
+.narcissism-report-high-risk-page .narcissism-report-trigger-list .a4-report-copy-block h3 {
+  font-size: 15.5px;
+  line-height: 1.35;
+}
+
+.narcissism-report-high-risk-page .narcissism-report-trigger-list .a4-report-copy-block p {
+  font-size: 12.4px;
+  line-height: 1.5;
 }
 
 .narcissism-report-warning-title .a4-report-boundary-icon,
@@ -3066,6 +3207,49 @@ th {
 .narcissism-report-focus-box.is-mobile p {
   font-size: 20px;
   line-height: 1.75;
+}
+
+.narcissism-report-level-tag.mobile-report-score-tag {
+  min-height: 36px;
+  padding: 0 15px;
+  font-size: 19px;
+  font-weight: 800;
+}
+
+.narcissism-report-validity-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.narcissism-report-validity-summary section {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  padding: 20px 22px;
+  border: 1px solid #dfe7f1;
+  border-radius: 14px;
+  background: #fbfdff;
+}
+
+.narcissism-report-validity-summary span {
+  color: #60748d;
+  font-size: 19px;
+  line-height: 1.4;
+  font-weight: 700;
+}
+
+.narcissism-report-validity-summary strong {
+  color: #173d74;
+  font-size: 27px;
+  line-height: 1.35;
+}
+
+.narcissism-report-validity-lead {
+  margin: 0;
+  color: #405772;
+  font-size: 20px;
+  line-height: 1.78;
 }
 
 .narcissism-report-mobile-trigger-card,

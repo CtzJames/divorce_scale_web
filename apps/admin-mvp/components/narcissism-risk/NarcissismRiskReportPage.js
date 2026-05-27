@@ -20,6 +20,8 @@ const HERO_WATERMARK_SRC = "/assets/report-watermark-hero.png";
 const BOUNDARY_WATERMARK_SRC = "/assets/report-watermark-boundary.png";
 const REPORT_FOOTER_SLOGAN = "法愈人生，帮你找到适合自己的方式。";
 const TEAM_INTRO_PAGE_COUNT = 3;
+const REPORT_INTRO_TEXT =
+  "本报告基于对您在自我中心、受挫反应、情感回应、关系施压与冲突升级五个维度的评估，结合高风险触发信号与当前阶段个体情况，形成配偶高自恋特质与高冲突婚姻风险结构解读与针对性建议，为您制定下一步行动计划、优化决策与风险防控提供参考。";
 
 const LEVEL_VISUALS = {
   low: {
@@ -60,8 +62,67 @@ const LEVEL_VISUALS = {
   },
 };
 
+const DIMENSION_VISUALS = {
+  N1: {
+    accent: "#426f86",
+    tint: "rgba(66, 111, 134, 0.12)",
+    Icon: Target,
+  },
+  N2: {
+    accent: "#9a7a35",
+    tint: "rgba(154, 122, 53, 0.13)",
+    Icon: AlertTriangle,
+  },
+  N3: {
+    accent: "#5d7c76",
+    tint: "rgba(93, 124, 118, 0.12)",
+    Icon: ShieldAlert,
+  },
+  N4: {
+    accent: "#b36b2f",
+    tint: "rgba(179, 107, 47, 0.12)",
+    Icon: LayoutGrid,
+  },
+  N5: {
+    accent: "#a94a43",
+    tint: "rgba(169, 74, 67, 0.12)",
+    Icon: FileCheck2,
+  },
+};
+
 function getLevelVisual(level) {
   return LEVEL_VISUALS[level] ?? LEVEL_VISUALS.moderate;
+}
+
+function getDimensionVisual(code) {
+  return DIMENSION_VISUALS[code] ?? DIMENSION_VISUALS.N1;
+}
+
+function formatAverageScore(score) {
+  const number = Number(score);
+  if (!Number.isFinite(number)) return "-";
+  return number.toFixed(2);
+}
+
+function formatValidityText(value) {
+  return String(value || "").replaceAll("NA", "与本人情况无关作答");
+}
+
+function getFocusDimensionItems(summary) {
+  if (summary?.dimensions?.length > 0) {
+    return summary.dimensions.map((dimension) => dimension.shortName);
+  }
+
+  return [summary?.fallbackText || "暂无单独标记"];
+}
+
+function getHighRiskPageGroups(details = []) {
+  const groups = [];
+  for (let index = 0; index < details.length; index += 2) {
+    groups.push(details.slice(index, index + 2));
+  }
+
+  return groups;
 }
 
 function formatDate(value) {
@@ -195,11 +256,42 @@ function ReportMiniIcon({ kind }) {
   return <span className="report-mini-icon">{icons[kind] ?? icons.result}</span>;
 }
 
-function LevelTag({ level, label }) {
+function DimensionIcon({ dimension }) {
+  const visual = getDimensionVisual(dimension.code);
+  const Icon = visual.Icon;
+
+  return (
+    <span
+      className="dimension-icon-badge"
+      style={{ color: visual.accent, backgroundColor: visual.tint }}
+      aria-hidden="true"
+    >
+      <Icon size={24} strokeWidth={2.1} />
+    </span>
+  );
+}
+
+function DimensionCodePill({ dimension, large = false }) {
+  const visual = getDimensionVisual(dimension.code);
+  return (
+    <span
+      className={`a4-report-dimension-code${large ? " is-large" : ""}`}
+      style={{
+        color: visual.accent,
+        backgroundColor: visual.tint,
+        borderColor: `${visual.accent}33`,
+      }}
+    >
+      {dimension.code}
+    </span>
+  );
+}
+
+function LevelTag({ level, label, className = "" }) {
   const visual = getLevelVisual(level);
   return (
     <span
-      className="narcissism-report-level-tag"
+      className={`narcissism-report-level-tag ${className}`.trim()}
       style={{
         color: visual.text,
         backgroundColor: visual.soft,
@@ -211,26 +303,15 @@ function LevelTag({ level, label }) {
   );
 }
 
-function FocusDimensionSummary({ summary, mobile = false }) {
-  const hasDimensions = summary?.dimensions?.length > 0;
-  const className = mobile
-    ? "narcissism-report-focus-box is-mobile"
-    : "narcissism-report-focus-box";
-
+function FocusDimensionGrid({ summary, compact = false }) {
   return (
-    <section className={className}>
-      <div>
-        <span>{summary?.title || "当前关注维度"}</span>
-        <strong>
-          {hasDimensions
-            ? summary.dimensions
-                .map((dimension) => `${dimension.code} ${dimension.shortName}`)
-                .join("、")
-            : summary?.fallbackText || "-"}
-        </strong>
-      </div>
-      {summary?.notice ? <p>{summary.notice}</p> : null}
-    </section>
+    <div
+      className={`narcissism-report-focus-grid${compact ? " is-compact" : ""}`}
+    >
+      {getFocusDimensionItems(summary).map((item) => (
+        <span key={item}>{item}</span>
+      ))}
+    </div>
   );
 }
 
@@ -267,9 +348,7 @@ function A4CoverPage({ report, totalPages }) {
         <div className="a4-report-title-block">
           <p className="a4-report-kicker">{report.reportTitle.primary}</p>
           <h1>{report.reportTitle.secondary}</h1>
-          <p>
-            本报告基于五个风险维度、高风险触发题、有效作答与 NA 情况进行结构化解读，用于后台内部审阅、咨询前准备和团队内部流转。
-          </p>
+          <p>{REPORT_INTRO_TEXT}</p>
         </div>
 
         <div className="a4-report-cover-meta">
@@ -299,7 +378,9 @@ function A4CoverPage({ report, totalPages }) {
           </div>
           <div className="a4-report-rate-panel">
             <span>平均风险得分</span>
-            <strong style={{ color: visual.main }}>{report.totalAverageScoreText}</strong>
+            <strong className="narcissism-report-score-nowrap" style={{ color: visual.main }}>
+              {report.totalAverageScoreText}
+            </strong>
             <div
               className="a4-report-progress-track"
               style={{ backgroundColor: visual.track }}
@@ -334,8 +415,8 @@ function A4OverviewPage({ report, totalPages }) {
 
       <main className="a4-report-page-body">
         <SectionHeading
-          title="总体风险评价"
-          description="本页汇总综合风险结果、关键指标、五维雷达图与当前关注维度。"
+          title="总体评价"
+          description="本页汇总综合风险结果、关键指标与维度结构概览。"
         />
 
         <div className="a4-report-overall-card narcissism-report-single-column-card">
@@ -354,12 +435,7 @@ function A4OverviewPage({ report, totalPages }) {
           <div className="a4-report-metric-card">
             <ReportMiniIcon kind="answer" />
             <span>有效作答</span>
-            <strong>{report.effectiveAnswerCount}</strong>
-          </div>
-          <div className="a4-report-metric-card">
-            <ReportMiniIcon kind="answer" />
-            <span>NA 数量</span>
-            <strong>{report.naCount}</strong>
+            <strong>{report.effectiveAnswerCount} 题</strong>
           </div>
           <div className="a4-report-metric-card">
             <ReportMiniIcon kind="warning" />
@@ -367,13 +443,13 @@ function A4OverviewPage({ report, totalPages }) {
             <strong>{report.highRiskTriggerSummary.label}</strong>
           </div>
           <div className="a4-report-metric-card">
-            <ReportMiniIcon kind="dimension" />
-            <span>纳入维度</span>
-            <strong>{report.dimensionSummaries.length} 项</strong>
+            <ReportMiniIcon kind="focus" />
+            <span>主要风险维度</span>
+            <FocusDimensionGrid summary={report.focusDimensionSummary} compact />
           </div>
         </div>
 
-        <FocusDimensionSummary summary={report.focusDimensionSummary} />
+        <SectionHeading title="维度结构概览" />
 
         <div className="a4-report-structure-grid">
           <div className="a4-report-radar-panel">
@@ -383,15 +459,19 @@ function A4OverviewPage({ report, totalPages }) {
             {report.dimensionSummaries.map((dimension) => (
               <section key={dimension.code} className="a4-report-dimension-overview-card">
                 <div className="a4-report-dimension-overview-name">
-                  <span className="a4-report-dimension-code">{dimension.code}</span>
+                  <DimensionCodePill dimension={dimension} />
+                  <DimensionIcon dimension={dimension} />
                   <div>
                     <h3>{dimension.shortName}</h3>
                     <p>{dimension.name}</p>
                   </div>
                 </div>
                 <div className="a4-report-dimension-overview-score">
-                  <strong>{dimension.averageScore ?? "-"}</strong>
+                  <strong style={{ color: getLevelVisual(dimension.level).main }}>
+                    {formatAverageScore(dimension.averageScore)}
+                  </strong>
                   <span>/ 5</span>
+                  <LevelTag level={dimension.level} label={dimension.levelLabel} />
                 </div>
               </section>
             ))}
@@ -419,7 +499,10 @@ function A4DimensionPage({ dimension, pageNumber, totalPages }) {
       <main className="a4-report-page-body">
         <div className="a4-report-dimension-hero">
           <div className="a4-report-dimension-title">
-            <span className="a4-report-dimension-code is-large">{dimension.code}</span>
+            <div className="narcissism-report-dimension-mark">
+              <DimensionIcon dimension={dimension} />
+              <DimensionCodePill dimension={dimension} large />
+            </div>
             <div>
               <h2>{dimension.name}</h2>
               <p>{dimension.description}</p>
@@ -427,7 +510,9 @@ function A4DimensionPage({ dimension, pageNumber, totalPages }) {
           </div>
           <div className="a4-report-dimension-score-card">
             <span>平均风险得分</span>
-            <strong>{dimension.averageScore ?? "-"}</strong>
+            <strong style={{ color: getLevelVisual(dimension.level).main }}>
+              {formatAverageScore(dimension.averageScore)}
+            </strong>
             <em>/ 5</em>
             <LevelTag level={dimension.level} label={dimension.levelLabel} />
           </div>
@@ -447,7 +532,7 @@ function A4DimensionPage({ dimension, pageNumber, totalPages }) {
           <section className="a4-report-copy-block narcissism-report-compact-copy">
             <h3>有效性提示</h3>
             <p>
-              有效作答 {dimension.validCount ?? "-"} 题，NA {dimension.naCount ?? "-"} 题。
+              有效作答 {dimension.validCount ?? "-"} 题，与本人情况无关作答 {dimension.naCount ?? "-"} 题。
               {dimension.insufficientValidity
                 ? "该维度有效作答较少，相关分数仅供参考。"
                 : "该维度具备可参考的作答基础。"}
@@ -465,54 +550,72 @@ function A4DimensionPage({ dimension, pageNumber, totalPages }) {
   );
 }
 
-function A4HighRiskPage({ report, pageNumber, totalPages }) {
+function A4HighRiskPages({ report, startPageNumber, totalPages }) {
   if (!report.highRiskTriggerSummary.triggered) return null;
+  const groups = getHighRiskPageGroups(report.highRiskTriggerDetails);
+  const pageGroups = groups.length > 0 ? groups : [[]];
 
   return (
-    <section className="a4-report-page a4-report-boundary-page narcissism-report-high-risk-page">
-      <img
-        src={BOUNDARY_WATERMARK_SRC}
-        alt=""
-        aria-hidden="true"
-        className="a4-report-watermark a4-report-boundary-watermark"
-      />
-      <header className="a4-report-page-header">
-        <LogoLockup compact />
-        <span>高风险触发题专项</span>
-      </header>
+    <>
+      {pageGroups.map((group, groupIndex) => {
+        const pageNumber = startPageNumber + groupIndex;
+        const isFirstPage = groupIndex === 0;
 
-      <main className="a4-report-page-body">
-        <div className="a4-report-boundary-title narcissism-report-warning-title">
-          <span className="a4-report-boundary-icon">
-            <AlertTriangle aria-hidden="true" strokeWidth={2} />
-          </span>
-          <div>
-            <h2>高风险触发题专项</h2>
-            <p>{report.highRiskTriggerSummary.text}</p>
-          </div>
-        </div>
+        return (
+          <section
+            key={`high-risk-page-${pageNumber}`}
+            className="a4-report-page a4-report-boundary-page narcissism-report-high-risk-page"
+          >
+            <img
+              src={BOUNDARY_WATERMARK_SRC}
+              alt=""
+              aria-hidden="true"
+              className="a4-report-watermark a4-report-boundary-watermark"
+            />
+            <header className="a4-report-page-header">
+              <LogoLockup compact />
+              <span>高风险触发题专项{isFirstPage ? "" : "（续）"}</span>
+            </header>
 
-        <div className="narcissism-report-trigger-list">
-          {report.highRiskTriggerDetails.map((trigger) => (
-            <section key={trigger.key} className="a4-report-copy-block">
-              <h3>
-                Q{trigger.questionNo} · {trigger.copy?.title || trigger.questionText}
-              </h3>
-              <p>{trigger.copy?.meaning}</p>
-              <p>{trigger.copy?.risk}</p>
-              <p>{trigger.copy?.suggestion}</p>
-              {trigger.copy?.boundary ? <p>{trigger.copy.boundary}</p> : null}
-            </section>
-          ))}
-        </div>
-      </main>
+            <main className="a4-report-page-body">
+              <div className="a4-report-boundary-title narcissism-report-warning-title">
+                <span className="a4-report-boundary-icon">
+                  <AlertTriangle aria-hidden="true" strokeWidth={2} />
+                </span>
+                <div>
+                  <h2>高风险触发题专项{isFirstPage ? "" : "（续）"}</h2>
+                  <p>
+                    {isFirstPage
+                      ? report.highRiskTriggerSummary.text
+                      : "以下为本次触发的其余高风险题，请结合现实安全、证据保存和外部支持同步判断。"}
+                  </p>
+                </div>
+              </div>
 
-      <A4PageFooter
-        label="高风险触发题专项"
-        pageNumber={pageNumber}
-        totalPages={totalPages}
-      />
-    </section>
+              <div className="narcissism-report-trigger-list">
+                {group.map((trigger) => (
+                  <section key={trigger.key} className="a4-report-copy-block">
+                    <h3>
+                      Q{trigger.questionNo} · {trigger.copy?.title || trigger.questionText}
+                    </h3>
+                    <p>{trigger.copy?.meaning}</p>
+                    <p>{trigger.copy?.risk}</p>
+                    <p>{trigger.copy?.suggestion}</p>
+                    {trigger.copy?.boundary ? <p>{trigger.copy.boundary}</p> : null}
+                  </section>
+                ))}
+              </div>
+            </main>
+
+            <A4PageFooter
+              label="高风险触发题专项"
+              pageNumber={pageNumber}
+              totalPages={totalPages}
+            />
+          </section>
+        );
+      })}
+    </>
   );
 }
 
@@ -544,9 +647,9 @@ function A4ValidityBoundaryPage({ report, pageNumber, totalPages }) {
             <FileCheck2 aria-hidden="true" strokeWidth={2} />
           </span>
           <div>
-            <h2>有效性与 NA 说明</h2>
+            <h2>有效性与作答说明</h2>
             <p>
-              NA 不等于无风险。本页用于标记低有效作答、单维 NA 和报告使用边界，供内部人员审阅时同步参考。
+              “与本人情况无关作答”不等于无风险。本页用于标记低有效作答、单维不计分作答和报告使用边界，供内部人员审阅时同步参考。
             </p>
           </div>
         </div>
@@ -554,9 +657,9 @@ function A4ValidityBoundaryPage({ report, pageNumber, totalPages }) {
         <div className="narcissism-report-validity-grid">
           {report.validityMessages.map((message) => (
             <section key={message.key} className="a4-report-copy-block">
-              <h3>{message.title}</h3>
-              <p>{message.text}</p>
-              {message.suggestion ? <p>{message.suggestion}</p> : null}
+              <h3>{formatValidityText(message.title)}</h3>
+              <p>{formatValidityText(message.text)}</p>
+              {message.suggestion ? <p>{formatValidityText(message.suggestion)}</p> : null}
               {message.dimensions?.length > 0 ? (
                 <p>涉及维度：{message.dimensions.join("、")}</p>
               ) : null}
@@ -736,8 +839,11 @@ function A4TeamIntroPages({ teamIntro, startPageNumber, totalPages }) {
 
 function A4ReportDocument({ report, reportRef, isHidden = false }) {
   const hasHighRiskPage = report.highRiskTriggerSummary.triggered;
+  const highRiskPageCount = hasHighRiskPage
+    ? Math.max(1, getHighRiskPageGroups(report.highRiskTriggerDetails).length)
+    : 0;
   const highRiskPageNumber = 2 + report.dimensionSummaries.length + 1;
-  const validityPageNumber = highRiskPageNumber + (hasHighRiskPage ? 1 : 0);
+  const validityPageNumber = highRiskPageNumber + highRiskPageCount;
   const teamStartPageNumber = validityPageNumber + 1;
   const totalPages = teamStartPageNumber + TEAM_INTRO_PAGE_COUNT - 1;
 
@@ -757,9 +863,9 @@ function A4ReportDocument({ report, reportRef, isHidden = false }) {
           totalPages={totalPages}
         />
       ))}
-      <A4HighRiskPage
+      <A4HighRiskPages
         report={report}
-        pageNumber={highRiskPageNumber}
+        startPageNumber={highRiskPageNumber}
         totalPages={totalPages}
       />
       <A4ValidityBoundaryPage
@@ -781,13 +887,29 @@ function MobileDimensionCard({ dimension }) {
     <section className="mobile-report-dimension-detail-card">
       <div className="mobile-report-dimension-detail-head">
         <div className="mobile-report-dimension-detail-title">
-          <span className="mobile-report-dimension-code">{dimension.code}</span>
+          <span
+            className="mobile-report-dimension-code"
+            style={{
+              color: getDimensionVisual(dimension.code).accent,
+              backgroundColor: getDimensionVisual(dimension.code).tint,
+              borderColor: `${getDimensionVisual(dimension.code).accent}33`,
+            }}
+          >
+            {dimension.code}
+          </span>
+          <DimensionIcon dimension={dimension} />
           <h3>{dimension.name}</h3>
         </div>
         <div className="mobile-report-dimension-detail-score">
-          <strong>{dimension.averageScore ?? "-"}</strong>
+          <strong style={{ color: getLevelVisual(dimension.level).main }}>
+            {formatAverageScore(dimension.averageScore)}
+          </strong>
           <span>/ 5</span>
-          <LevelTag level={dimension.level} label={dimension.levelLabel} />
+          <LevelTag
+            level={dimension.level}
+            label={dimension.levelLabel}
+            className="mobile-report-score-tag"
+          />
         </div>
       </div>
       <div className="mobile-report-dimension-copy-block">
@@ -856,18 +978,40 @@ function MobileValidityBoundary({ report }) {
   return (
     <>
       <section className="mobile-report-card">
-        <MobileSectionTitle>有效性与 NA 说明</MobileSectionTitle>
+        <MobileSectionTitle>有效性与作答说明</MobileSectionTitle>
+        <div className="narcissism-report-validity-summary">
+          <section>
+            <span>有效作答</span>
+            <strong>{report.effectiveAnswerCount} 题</strong>
+          </section>
+          <section>
+            <span>与本人情况无关作答</span>
+            <strong>{report.naCount} 题</strong>
+          </section>
+        </div>
+        <p className="narcissism-report-validity-lead">
+          选择“与本人情况无关”的题目不会计入风险得分，也不等于对应方向一定没有风险。若相关情境之后出现，仍建议结合具体事件、沟通记录和现实安全状态重新判断。
+        </p>
         <div className="mobile-report-detail-section">
-          {report.validityMessages.map((message) => (
-            <section key={message.key} className="narcissism-report-mobile-note">
-              <h3>{message.title}</h3>
-              <p>{message.text}</p>
-              {message.suggestion ? <p>{message.suggestion}</p> : null}
-              {message.dimensions?.length > 0 ? (
-                <p>涉及维度：{message.dimensions.join("、")}</p>
-              ) : null}
+          {report.validityMessages.length > 0 ? (
+            report.validityMessages.map((message) => (
+              <section key={message.key} className="narcissism-report-mobile-note">
+                <h3>{formatValidityText(message.title)}</h3>
+                <p>{formatValidityText(message.text)}</p>
+                {message.suggestion ? <p>{formatValidityText(message.suggestion)}</p> : null}
+                {message.dimensions?.length > 0 ? (
+                  <p>涉及维度：{message.dimensions.join("、")}</p>
+                ) : null}
+              </section>
+            ))
+          ) : (
+            <section className="narcissism-report-mobile-note">
+              <h3>本次作答具备基础参考性</h3>
+              <p>
+                当前有效作答数量达到报告生成要求，可用于识别关系互动中的主要风险信号。报告仍应与具体事实、证据材料和专业意见结合使用。
+              </p>
             </section>
-          ))}
+          )}
         </div>
       </section>
 
@@ -938,8 +1082,9 @@ function MobileReportDocument({ report, reportRef }) {
           <h1>{report.reportTitle.primary}</h1>
           <p className="mobile-report-subtitle">{report.reportTitle.secondary}</p>
           <p className="mobile-report-generated">
-            {report.clientName} · {formatDate(report.submittedAt)}
+            报告生成时间：{formatDate(report.reportGeneratedAt || report.submittedAt)}
           </p>
+          <p className="mobile-report-intro">{REPORT_INTRO_TEXT}</p>
         </div>
       </header>
 
@@ -967,13 +1112,6 @@ function MobileReportDocument({ report, reportRef }) {
         <p className="mobile-report-result-summary">{report.overallCopy?.meaning}</p>
       </section>
 
-      <section className="mobile-report-card mobile-report-overall-card">
-        <MobileSectionTitle>核心结论摘要</MobileSectionTitle>
-        {report.executiveSummary.map((item) => (
-          <p key={item}>{item}</p>
-        ))}
-      </section>
-
       <section className="mobile-report-card">
         <MobileSectionTitle>关键指标</MobileSectionTitle>
         <div className="mobile-report-metrics-grid">
@@ -985,17 +1123,17 @@ function MobileReportDocument({ report, reportRef }) {
           <div className="mobile-report-metric-card">
             <ReportMiniIcon kind="answer" />
             <span>有效作答</span>
-            <strong>{report.effectiveAnswerCount}</strong>
-          </div>
-          <div className="mobile-report-metric-card">
-            <ReportMiniIcon kind="answer" />
-            <span>NA 数量</span>
-            <strong>{report.naCount}</strong>
+            <strong>{report.effectiveAnswerCount} 题</strong>
           </div>
           <div className="mobile-report-metric-card">
             <ReportMiniIcon kind="warning" />
             <span>高风险触发</span>
             <strong>{report.highRiskTriggerSummary.label}</strong>
+          </div>
+          <div className="mobile-report-metric-card">
+            <ReportMiniIcon kind="focus" />
+            <span>主要风险维度</span>
+            <FocusDimensionGrid summary={report.focusDimensionSummary} />
           </div>
         </div>
       </section>
@@ -1007,25 +1145,30 @@ function MobileReportDocument({ report, reportRef }) {
       </section>
 
       <section className="mobile-report-card">
-        <MobileSectionTitle>五维雷达图</MobileSectionTitle>
+        <MobileSectionTitle>维度结构概览</MobileSectionTitle>
         <div className="mobile-report-radar-panel">
           <AdminDimensionRadarChart dimensions={report.radarData} />
         </div>
-      </section>
-
-      <section className="mobile-report-card">
-        <MobileSectionTitle>五维结构概览</MobileSectionTitle>
-        <FocusDimensionSummary summary={report.focusDimensionSummary} mobile />
         <div className="mobile-report-dimension-score-list">
           {report.dimensionSummaries.map((dimension) => (
             <div key={dimension.code} className="mobile-report-dimension-score-row">
               <div className="mobile-report-dimension-score-name">
-                <span className="mobile-report-dimension-code">{dimension.code}</span>
-                <h3>{dimension.shortName}</h3>
+                <DimensionIcon dimension={dimension} />
+                <h3>{dimension.name}</h3>
               </div>
               <div className="mobile-report-dimension-score-meta">
-                <span>{dimension.scoreText}</span>
-                <LevelTag level={dimension.level} label={dimension.levelLabel} />
+                <span>
+                  平均分{" "}
+                  <strong style={{ color: getLevelVisual(dimension.level).main }}>
+                    {formatAverageScore(dimension.averageScore)}
+                  </strong>{" "}
+                  / 5
+                </span>
+                <LevelTag
+                  level={dimension.level}
+                  label={dimension.levelLabel}
+                  className="mobile-report-score-tag"
+                />
               </div>
             </div>
           ))}
@@ -1066,8 +1209,7 @@ export default function NarcissismRiskReportPage({ report }) {
   const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
   const [exportingType, setExportingType] = useState(null);
   const [feedback, setFeedback] = useState({ type: "", message: "" });
-  const currentPreviewLabel =
-    previewMode === "web" ? "网页端 A4 报告" : "移动端长图报告";
+  const currentPreviewLabel = previewMode === "web" ? "网页端报告" : "移动端报告";
   const isExporting = exportingType !== null;
   const exportButtonLabel =
     exportingType === "png"
@@ -1166,7 +1308,7 @@ export default function NarcissismRiskReportPage({ report }) {
       <section className="panel report-toolbar-panel">
         <div>
           <h2 className="report-toolbar-title">配偶高自恋风险详细报告</h2>
-          <p className="subtitle">后台内部预览页，支持网页端 A4 报告与移动端长图报告。</p>
+          <p className="subtitle">当前页为后台内部预览页，支持固定版心报告图片导出。</p>
         </div>
         <div className="report-toolbar-actions">
           <div className="report-preview-status" aria-live="polite">
@@ -1191,7 +1333,7 @@ export default function NarcissismRiskReportPage({ report }) {
                   role="menuitem"
                   onClick={() => handleSelectPreviewMode("web")}
                 >
-                  预览网页端 A4 报告
+                  预览网页端报告
                 </button>
                 <button
                   className={previewMode === "mobile" ? "active" : ""}
@@ -1199,7 +1341,7 @@ export default function NarcissismRiskReportPage({ report }) {
                   role="menuitem"
                   onClick={() => handleSelectPreviewMode("mobile")}
                 >
-                  预览移动端长图报告
+                  预览移动端报告
                 </button>
               </div>
             ) : null}
