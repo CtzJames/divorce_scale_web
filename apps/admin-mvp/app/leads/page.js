@@ -4,6 +4,7 @@ import LeadsFilters from "../../components/LeadsFilters";
 import LeadsPagination from "../../components/LeadsPagination";
 import LeadsTable from "../../components/LeadsTable";
 import { ADMIN_SESSION_COOKIE, isAuthorizedSessionValue } from "../../lib/auth";
+import { deleteLeadsAction } from "./actions";
 import {
   buildLeadsSearchParams,
   normalizeLeadFilters,
@@ -77,7 +78,7 @@ export default async function LeadsPage({ searchParams }) {
               查询失败：{error.message || "请检查 Supabase 环境变量与权限配置。"}
             </div>
           ) : null}
-          <LeadsTable rows={rows} />
+          <LeadsTable rows={rows} deleteAction={deleteLeadsAction} />
           <LeadsPagination
             filters={filters}
             page={page}

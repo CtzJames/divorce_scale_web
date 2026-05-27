@@ -179,10 +179,24 @@ textarea {
   overflow: auto;
 }
 
+.leads-bulk-shell {
+  display: grid;
+  gap: 10px;
+}
+
+.bulk-action-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding-top: 10px;
+}
+
 table {
   border-collapse: collapse;
   width: 100%;
-  min-width: 980px;
+  min-width: 1020px;
   margin-top: 14px;
 }
 
@@ -199,6 +213,18 @@ th {
   color: var(--muted);
   font-weight: 600;
   background: #fbfcfe;
+}
+
+.select-col {
+  width: 42px;
+  text-align: center;
+}
+
+.select-col input {
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  cursor: pointer;
 }
 
 .chip {
