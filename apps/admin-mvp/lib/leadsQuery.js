@@ -1,11 +1,12 @@
 import {
-  RESULT_LEVEL_ALIASES,
-  RESULT_LEVEL_QUERY_VALUES,
-} from "./constants";
-import {
   ASSESSMENT_TYPE_FILTER_VALUES,
+  DIVORCE_SCALE_ASSESSMENT_TYPE,
+  LEGACY_DIVORCE_SCALE_ASSESSMENT_TYPE,
   NARCISSISM_RISK_ASSESSMENT_TYPE,
   SERVICE_INTENT_FILTER_VALUES,
+  normalizeAssessmentTypeFilterValue,
+  normalizeResultLevelFilterValue,
+  resolveResultLevelFilter,
 } from "./leadAssessment";
 import { getSupabaseServerClient } from "./supabaseServer";
 
@@ -80,23 +81,47 @@ function normalizeDateFilter(value) {
   return date.toISOString();
 }
 
+function applyAssessmentTypeFilter(query, assessmentType) {
+  const normalizedAssessmentType =
+    normalizeAssessmentTypeFilterValue(assessmentType);
+
+  if (normalizedAssessmentType === ASSESSMENT_TYPE_FILTER_VALUES.narcissism) {
+    return query.eq("assessment_type", NARCISSISM_RISK_ASSESSMENT_TYPE);
+  }
+
+  if (normalizedAssessmentType === ASSESSMENT_TYPE_FILTER_VALUES.divorce) {
+    return query.or(
+      [
+        "assessment_type.is.null",
+        "assessment_type.eq.",
+        `assessment_type.in.(${DIVORCE_SCALE_ASSESSMENT_TYPE},${LEGACY_DIVORCE_SCALE_ASSESSMENT_TYPE})`,
+      ].join(",")
+    );
+  }
+
+  return query;
+}
+
 export function normalizeLeadFilters(raw = {}) {
+  const assessmentType = normalizeAssessmentTypeFilterValue(
+    getSafeFilter(raw.assessmentType, "all") || "all"
+  );
+
   const filters = {
     name: getSafeFilter(raw.name),
     phone: getSafeFilter(raw.phone),
-    assessmentType: getSafeFilter(raw.assessmentType, "all") || "all",
+    assessmentType,
     followUpStatus: getSafeFilter(raw.followUpStatus, "all") || "all",
-    resultLevel: getSafeFilter(raw.resultLevel, "all") || "all",
+    resultLevel: normalizeResultLevelFilterValue(
+      getSafeFilter(raw.resultLevel, "all") || "all",
+      assessmentType
+    ),
     assignedTo: getSafeFilter(raw.assignedTo),
     serviceIntent: getSafeFilter(raw.serviceIntent, "all") || "all",
     serviceType: getSafeFilter(raw.serviceType, "all") || "all",
     createdFrom: getSafeFilter(raw.createdFrom),
     createdTo: getSafeFilter(raw.createdTo),
   };
-
-  if (filters.resultLevel in RESULT_LEVEL_ALIASES) {
-    filters.resultLevel = RESULT_LEVEL_ALIASES[filters.resultLevel];
-  }
 
   return filters;
 }
@@ -141,32 +166,25 @@ export function buildLeadsSearchParams(filters, options = {}) {
 function applyLeadFilters(query, filters) {
   const supabase = getSupabaseServerClient();
   let nextQuery = query ?? supabase.from("assessment_results");
+  const resultLevelFilter = resolveResultLevelFilter(
+    filters.resultLevel,
+    filters.assessmentType
+  );
 
-  if (
+  if (resultLevelFilter) {
+    nextQuery = applyAssessmentTypeFilter(
+      nextQuery,
+      resultLevelFilter.assessmentType
+    ).in("result_level", resultLevelFilter.resultLevels);
+  } else if (
     hasText(filters.assessmentType) &&
     filters.assessmentType !== ASSESSMENT_TYPE_FILTER_VALUES.all
   ) {
-    if (filters.assessmentType === ASSESSMENT_TYPE_FILTER_VALUES.narcissism) {
-      nextQuery = nextQuery.eq(
-        "assessment_type",
-        NARCISSISM_RISK_ASSESSMENT_TYPE
-      );
-    } else if (filters.assessmentType === ASSESSMENT_TYPE_FILTER_VALUES.divorce) {
-      nextQuery = nextQuery.or(
-        `assessment_type.is.null,assessment_type.neq.${NARCISSISM_RISK_ASSESSMENT_TYPE}`
-      );
-    }
+    nextQuery = applyAssessmentTypeFilter(nextQuery, filters.assessmentType);
   }
 
   if (hasText(filters.followUpStatus) && filters.followUpStatus !== "all") {
     nextQuery = nextQuery.eq("follow_up_status", filters.followUpStatus.trim());
-  }
-
-  if (hasText(filters.resultLevel) && filters.resultLevel !== "all") {
-    const values = RESULT_LEVEL_QUERY_VALUES[filters.resultLevel] ?? [
-      filters.resultLevel,
-    ];
-    nextQuery = nextQuery.in("result_level", values);
   }
 
   if (hasText(filters.assignedTo)) {

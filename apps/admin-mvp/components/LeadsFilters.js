@@ -1,11 +1,15 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import {
   FOLLOW_UP_STATUS_OPTIONS,
-  RESULT_LEVEL_FILTER_OPTIONS,
   SERVICE_TYPE_OPTIONS,
 } from "../lib/constants";
 import {
   ASSESSMENT_TYPE_FILTER_OPTIONS,
   SERVICE_INTENT_FILTER_OPTIONS,
+  getResultLevelFilterOptions,
+  normalizeResultLevelFilterValue,
 } from "../lib/leadAssessment";
 
 function buildOptions(options) {
@@ -17,6 +21,21 @@ function buildOptions(options) {
 }
 
 export default function LeadsFilters({ filters }) {
+  const [assessmentType, setAssessmentType] = useState(filters.assessmentType);
+  const [resultLevel, setResultLevel] = useState(filters.resultLevel);
+  const resultLevelOptions = useMemo(
+    () => getResultLevelFilterOptions(assessmentType),
+    [assessmentType]
+  );
+
+  function handleAssessmentTypeChange(event) {
+    const nextAssessmentType = event.target.value;
+    setAssessmentType(nextAssessmentType);
+    setResultLevel((currentResultLevel) =>
+      normalizeResultLevelFilterValue(currentResultLevel, nextAssessmentType)
+    );
+  }
+
   return (
     <form method="get" className="panel">
       <div className="grid">
@@ -58,7 +77,11 @@ export default function LeadsFilters({ filters }) {
 
         <label className="field">
           <span>量表类型</span>
-          <select name="assessmentType" defaultValue={filters.assessmentType}>
+          <select
+            name="assessmentType"
+            value={assessmentType}
+            onChange={handleAssessmentTypeChange}
+          >
             {buildOptions(ASSESSMENT_TYPE_FILTER_OPTIONS)}
           </select>
         </label>
@@ -79,8 +102,12 @@ export default function LeadsFilters({ filters }) {
 
         <label className="field">
           <span>结果等级</span>
-          <select name="resultLevel" defaultValue={filters.resultLevel}>
-            {buildOptions(RESULT_LEVEL_FILTER_OPTIONS)}
+          <select
+            name="resultLevel"
+            value={resultLevel}
+            onChange={(event) => setResultLevel(event.target.value)}
+          >
+            {buildOptions(resultLevelOptions)}
           </select>
         </label>
 

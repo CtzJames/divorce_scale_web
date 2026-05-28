@@ -39,6 +39,91 @@ export const SERVICE_INTENT_FILTER_OPTIONS = [
   { value: SERVICE_INTENT_FILTER_VALUES.none, label: "未选择" },
 ];
 
+export const RESULT_LEVEL_FILTER_VALUES = {
+  all: "all",
+  divorceHigh: "divorce_high",
+  divorceMid: "divorce_mid",
+  divorceLow: "divorce_low",
+  narcissismLow: "narcissism_low",
+  narcissismMild: "narcissism_mild",
+  narcissismModerate: "narcissism_moderate",
+  narcissismHigh: "narcissism_high",
+};
+
+const DIVORCE_RESULT_LEVEL_FILTER_OPTIONS = [
+  { value: RESULT_LEVEL_FILTER_VALUES.all, label: "全部结果等级" },
+  { value: RESULT_LEVEL_FILTER_VALUES.divorceHigh, label: "从容通关者" },
+  { value: RESULT_LEVEL_FILTER_VALUES.divorceMid, label: "稳健备战者" },
+  { value: RESULT_LEVEL_FILTER_VALUES.divorceLow, label: "急速蓄力者" },
+];
+
+const NARCISSISM_RESULT_LEVEL_FILTER_OPTIONS = [
+  { value: RESULT_LEVEL_FILTER_VALUES.all, label: "全部结果等级" },
+  { value: RESULT_LEVEL_FILTER_VALUES.narcissismLow, label: "低风险" },
+  { value: RESULT_LEVEL_FILTER_VALUES.narcissismMild, label: "轻度风险" },
+  { value: RESULT_LEVEL_FILTER_VALUES.narcissismModerate, label: "中度风险" },
+  { value: RESULT_LEVEL_FILTER_VALUES.narcissismHigh, label: "高风险" },
+];
+
+const ALL_RESULT_LEVEL_FILTER_OPTIONS = [
+  { value: RESULT_LEVEL_FILTER_VALUES.all, label: "全部结果等级" },
+  { value: RESULT_LEVEL_FILTER_VALUES.divorceHigh, label: "离婚力｜从容通关者" },
+  { value: RESULT_LEVEL_FILTER_VALUES.divorceMid, label: "离婚力｜稳健备战者" },
+  { value: RESULT_LEVEL_FILTER_VALUES.divorceLow, label: "离婚力｜急速蓄力者" },
+  { value: RESULT_LEVEL_FILTER_VALUES.narcissismLow, label: "自恋风险｜低风险" },
+  { value: RESULT_LEVEL_FILTER_VALUES.narcissismMild, label: "自恋风险｜轻度风险" },
+  {
+    value: RESULT_LEVEL_FILTER_VALUES.narcissismModerate,
+    label: "自恋风险｜中度风险",
+  },
+  { value: RESULT_LEVEL_FILTER_VALUES.narcissismHigh, label: "自恋风险｜高风险" },
+];
+
+export const RESULT_LEVEL_FILTER_META = {
+  [RESULT_LEVEL_FILTER_VALUES.divorceHigh]: {
+    assessmentType: ASSESSMENT_TYPE_FILTER_VALUES.divorce,
+    resultLevels: ["high"],
+  },
+  [RESULT_LEVEL_FILTER_VALUES.divorceMid]: {
+    assessmentType: ASSESSMENT_TYPE_FILTER_VALUES.divorce,
+    resultLevels: ["medium", "mid"],
+  },
+  [RESULT_LEVEL_FILTER_VALUES.divorceLow]: {
+    assessmentType: ASSESSMENT_TYPE_FILTER_VALUES.divorce,
+    resultLevels: ["low"],
+  },
+  [RESULT_LEVEL_FILTER_VALUES.narcissismLow]: {
+    assessmentType: ASSESSMENT_TYPE_FILTER_VALUES.narcissism,
+    resultLevels: ["low"],
+  },
+  [RESULT_LEVEL_FILTER_VALUES.narcissismMild]: {
+    assessmentType: ASSESSMENT_TYPE_FILTER_VALUES.narcissism,
+    resultLevels: ["mild"],
+  },
+  [RESULT_LEVEL_FILTER_VALUES.narcissismModerate]: {
+    assessmentType: ASSESSMENT_TYPE_FILTER_VALUES.narcissism,
+    resultLevels: ["moderate"],
+  },
+  [RESULT_LEVEL_FILTER_VALUES.narcissismHigh]: {
+    assessmentType: ASSESSMENT_TYPE_FILTER_VALUES.narcissism,
+    resultLevels: ["high"],
+  },
+};
+
+const LEGACY_DIVORCE_RESULT_LEVEL_FILTER_MAP = {
+  high: RESULT_LEVEL_FILTER_VALUES.divorceHigh,
+  medium: RESULT_LEVEL_FILTER_VALUES.divorceMid,
+  mid: RESULT_LEVEL_FILTER_VALUES.divorceMid,
+  low: RESULT_LEVEL_FILTER_VALUES.divorceLow,
+};
+
+const LEGACY_NARCISSISM_RESULT_LEVEL_FILTER_MAP = {
+  high: RESULT_LEVEL_FILTER_VALUES.narcissismHigh,
+  moderate: RESULT_LEVEL_FILTER_VALUES.narcissismModerate,
+  mild: RESULT_LEVEL_FILTER_VALUES.narcissismMild,
+  low: RESULT_LEVEL_FILTER_VALUES.narcissismLow,
+};
+
 const ASSESSMENT_TYPE_LABELS = {
   [DIVORCE_SCALE_ASSESSMENT_TYPE]: "离婚力量表",
   [NARCISSISM_RISK_ASSESSMENT_TYPE]: "配偶高自恋风险量表",
@@ -481,6 +566,78 @@ export function getAssessmentTypeLabel(record) {
 
 export function getAssessmentTypeShortLabel(record) {
   return ASSESSMENT_TYPE_SHORT_LABELS[getAssessmentTypeKey(record)];
+}
+
+export function normalizeAssessmentTypeFilterValue(value) {
+  if (value === ASSESSMENT_TYPE_FILTER_VALUES.narcissism) {
+    return ASSESSMENT_TYPE_FILTER_VALUES.narcissism;
+  }
+
+  if (
+    value === ASSESSMENT_TYPE_FILTER_VALUES.divorce ||
+    value === LEGACY_DIVORCE_SCALE_ASSESSMENT_TYPE
+  ) {
+    return ASSESSMENT_TYPE_FILTER_VALUES.divorce;
+  }
+
+  return ASSESSMENT_TYPE_FILTER_VALUES.all;
+}
+
+export function getResultLevelFilterOptions(assessmentType) {
+  const normalizedAssessmentType =
+    normalizeAssessmentTypeFilterValue(assessmentType);
+
+  if (normalizedAssessmentType === ASSESSMENT_TYPE_FILTER_VALUES.divorce) {
+    return DIVORCE_RESULT_LEVEL_FILTER_OPTIONS;
+  }
+
+  if (normalizedAssessmentType === ASSESSMENT_TYPE_FILTER_VALUES.narcissism) {
+    return NARCISSISM_RESULT_LEVEL_FILTER_OPTIONS;
+  }
+
+  return ALL_RESULT_LEVEL_FILTER_OPTIONS;
+}
+
+export function normalizeResultLevelFilterValue(value, assessmentType) {
+  const rawValue = String(value ?? "").trim();
+  if (!rawValue || rawValue === RESULT_LEVEL_FILTER_VALUES.all) {
+    return RESULT_LEVEL_FILTER_VALUES.all;
+  }
+
+  const normalizedAssessmentType =
+    normalizeAssessmentTypeFilterValue(assessmentType);
+  let normalizedValue = rawValue;
+
+  if (!RESULT_LEVEL_FILTER_META[normalizedValue]) {
+    if (normalizedAssessmentType === ASSESSMENT_TYPE_FILTER_VALUES.narcissism) {
+      normalizedValue =
+        LEGACY_NARCISSISM_RESULT_LEVEL_FILTER_MAP[rawValue] ?? rawValue;
+    } else if (normalizedAssessmentType === ASSESSMENT_TYPE_FILTER_VALUES.divorce) {
+      normalizedValue =
+        LEGACY_DIVORCE_RESULT_LEVEL_FILTER_MAP[rawValue] ?? rawValue;
+    } else {
+      normalizedValue =
+        LEGACY_DIVORCE_RESULT_LEVEL_FILTER_MAP[rawValue] ??
+        LEGACY_NARCISSISM_RESULT_LEVEL_FILTER_MAP[rawValue] ??
+        rawValue;
+    }
+  }
+
+  const allowedValues = new Set(
+    getResultLevelFilterOptions(normalizedAssessmentType).map(
+      (option) => option.value
+    )
+  );
+
+  return allowedValues.has(normalizedValue)
+    ? normalizedValue
+    : RESULT_LEVEL_FILTER_VALUES.all;
+}
+
+export function resolveResultLevelFilter(value, assessmentType) {
+  const normalizedValue = normalizeResultLevelFilterValue(value, assessmentType);
+  if (normalizedValue === RESULT_LEVEL_FILTER_VALUES.all) return null;
+  return RESULT_LEVEL_FILTER_META[normalizedValue] ?? null;
 }
 
 export function getServiceIntentLabel(value) {

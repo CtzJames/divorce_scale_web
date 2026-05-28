@@ -62,9 +62,9 @@ export const ASSET_TIER_LEVEL_OPTIONS = [
 
 export const RESULT_LEVEL_FILTER_OPTIONS = [
   { value: "all", label: "全部结果等级" },
-  { value: "high", label: "准备充分" },
-  { value: "medium", label: "准备一般" },
-  { value: "low", label: "准备不足" },
+  { value: "high", label: "从容通关者" },
+  { value: "medium", label: "稳健备战者" },
+  { value: "low", label: "急速蓄力者" },
 ];
 
 export const RESULT_LEVEL_ALIASES = {
